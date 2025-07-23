@@ -17,7 +17,7 @@ destContainerSerial = Targeting.GetNewTarget()
 
 
 items = Items.GetContainerItems(srcContainerSerial)
-Messages.Print("Moving " .. #items .. " items from " .. sourceContainer.Name .. " to " .. destinationContainer.Name, 77)
+Messages.Print("Moving " .. #items .. " items", 77)
 
 for i, item in ipairs(items) do
     Player.PickUp(item.Serial, item.Amount)

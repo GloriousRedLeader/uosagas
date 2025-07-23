@@ -10,6 +10,8 @@
 local POUCHES = true
 local POISONS = true
 local BANDAGES = true
+--local WEAPON_GRAPHIC = 0x1401
+local WEAPON_GRAPHIC = 0x1405
 
 Messages.Overhead('Healing Started', 34)
 Cooldown = {}; do
@@ -77,7 +79,7 @@ while not Player.IsDead do
     
     if POISONS and os.clock() > checkPoison then
 		wep = Items.FindByLayer(1)
-		if wep ~= nil and wep.Properties ~= nil then
+		if wep ~= nil and wep.Properties ~= nil and wep.Graphic == WEAPON_GRAPHIC then
 			if string.find(wep.Properties, 'Poison') == nil then
 				Messages.Overhead("You dont have poison", 44, Player.Serial)
 				
