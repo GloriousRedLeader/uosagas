@@ -105,8 +105,8 @@ for _, item in ipairs(Items.GetContainerItems(CONTAINER_SERIAL)) do
     if item ~= nil then
         if has_value(ITEM_IDS_TO_MUCK_WITH, item.Graphic) and not string.find(item.Name, "Unidentified") then
             if has_any_mod(item.Name, REQUIRED_DURABILITY)
-                and has_any_mod(item.Name, REQUIRED_DURABILITY)
-                and has_any_mod(item.Name, REQUIRED_DURABILITY) then
+                and has_any_mod(item.Name, REQUIRED_EVAL)
+                and has_any_mod(item.Name, REQUIRED_DAMAGE) then
                 
                 Messages.Print("Found a really good item " .. item.Name, 77)
 
