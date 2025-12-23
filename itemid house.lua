@@ -13,6 +13,8 @@
     Right now this only works with Grimoires.
 --]]
 
+local MOVE_CRAP_ITEMS_TO_PACK = true
+
 -- Instructions: Secure a chest in your house. Get the serial. Plug the serial in below.
 -- Put a wand in your backpack. Put all the unidentified items in the chest. Press play.
 -- It is a little weird. But eventually it will id everything. I think.
@@ -49,7 +51,7 @@ local REQUIRED_EVAL = { "Surpassingly", "Eminently", "Exceedingly", "Supremely" 
 -- Force (30% more base damage)
 -- Power (40% more base damage)
 -- Vanq (50% more base damage)
-local REQUIRED_DAMAGE = { "Might", "Force", "Power", "Vanquishing" } 
+local REQUIRED_DAMAGE = { "Force", "Power", "Vanquishing" } 
 
 local ITEM_MOVE_DELAY_MS = 666
 
@@ -101,6 +103,7 @@ for _, item in ipairs(Items.GetContainerItems(CONTAINER_SERIAL)) do
     end
 end
 
+if MOVE_CRAP_ITEMS_TO_PACK then
 for _, item in ipairs(Items.GetContainerItems(CONTAINER_SERIAL)) do
     if item ~= nil then
         if has_value(ITEM_IDS_TO_MUCK_WITH, item.Graphic) and not string.find(item.Name, "Unidentified") then
@@ -119,4 +122,5 @@ for _, item in ipairs(Items.GetContainerItems(CONTAINER_SERIAL)) do
             end
         end
     end
+end
 end
