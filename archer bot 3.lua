@@ -1,10 +1,14 @@
-local graphicLootbag = 0x0E79
 local actionDelay = 550             -- Milliseconds of delay between actions
 local autoAttackRed = true         -- Auto attack reds
 local POISONS = true
 local AUTOLOOT = true
 local BANDAGES = true
+local POUCHES = true
+
+-- Fork
 local WEAPON_GRAPHIC = 0x1405
+-- Kryss
+--local WEAPON_GRAPHIC = 0x1401
 
 local graphicIdLootableItemPriorityList = 
 {
@@ -34,20 +38,47 @@ local graphicIdLootableItemPriorityList =
     0x0F84,   -- Garlic
     0x0F7A,   -- Black Pearl
     0x0F85,   -- Ginseng
-   -- 0x0F3F   -- Arrows
+    0x0F3F   -- Arrows
     -- (lowest priority)
 }
+
+Cooldown = {}; do
+    local data = {}
+    setmetatable(Cooldown, {
+        __call = function(t, k, v)
+            if not v then
+                return t[k]
+            end
+            t[k] = v
+        end,
+        __index = function(_, k)
+            local cd = data[k]
+            if not cd then
+                return
+            end
 
+            local v = cd.delay - (os.clock() - cd.clock) * 1000
+            if v < 0 then
+                data[k] = nil
+                v = nil
+            end
+            return v
+        end,
+        __newindex = function(_, k, v)
+            if not v then
+                data[k] = nil
+                return
+            end
 
-
-
+            local cd = data[k] or { clock = os.clock() }
+            cd.delay = type(v) == "number" and v > 0 and v or 0 or 0
+            data[k] = cd
+        end
+    })
+end
 
 --XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--
-
-
-
-
-
+
 local graphicIdLootableSet = {}
 local graphicIdToPriority = {}
 for i, graphic in ipairs(graphicIdLootableItemPriorityList) do
@@ -108,7 +139,6 @@ function FindCorpse()
     return itemCorpse
 end
 -----------------------------------------------------------------
---function GetSortedItemList(lootbag)
 function GetSortedItemList()
     local seriableIdLootPriorityList = {}
     local itemList = Items.FindByFilter({})
@@ -167,42 +197,20 @@ function GetSortedItemList()
     return seriableIdLootPriorityList
 end
 -----------------------------------------------------------------
---healingEnabled = true
-healingActive = false
-lastHealTime = 0
-healCooldown = 12500
+
 function AutoHeal()
-    local currentTime = os.time() * 1000
-    --if healingEnabled and Player.Hits < 100 and not healingActive then
-    if BANDAGES and (Player.Hits < Player.HitsMax or Player.IsPoisoned) and not healingActive then
-        if Player.UseObjectByType(0xE21) then
-            if Targeting.WaitForTarget(5000) then
-                Targeting.TargetSelf()
-                healingActive = true
-                lastHealTime = currentTime
+
+    if BANDAGES and Player.Hits < Player.HitsMax or Player.IsPoisoned then
+        local bandage = Items.FindByType(0x0E21)
+        if bandage and not Cooldown("BandageSelf") then
+            if Player.UseObject(bandage.Serial) then
+                if Targeting.WaitForTarget(500) then
+                    Targeting.TargetSelf()
+                    Cooldown("BandageSelf", (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100)
+                end
             end
         end
     end
-
-    if healingActive and (currentTime - lastHealTime >= healCooldown) then
-        healingActive = false
-    end
-    
-    if scavengeEnabled and healingActive == false then
-	    filter = {onground=true, rangemax=2, graphics=itemsToSearchFor}
-	    
-	    list = Items.FindByFilter(filter)
-	    for index, item in ipairs(list) do
-	        Player.PickUp(item.Serial, 1000)
-	        Pause(100)
-	        Player.DropInBackpack()
-	        Pause(100)
-	    end
-	    -- Important Pause for CPU
-	    Pause(150)
-    end
-
-    Pause(50)
 end
 
 -----------------------------------------------------------------
@@ -294,49 +302,29 @@ function AutoLoot()
     end
 end
 -----------------------------------------------------------------
---Messages.Print("Auto looter started...", 69, Player.Serial)
+function PopPouch()
+   if POUCHES and Player.IsParalyzed then
+		local items = Items.FindByFilter({
+		    graphics = {0x0E79},
+		    hues = {0x0025}
+		})
+		for i, item in ipairs(items) do
+		    if item.RootContainer == Player.Serial then
+			Player.UseObject(item.Serial)
+			break
+		    end
+		end
+	end		
+end
+-----------------------------------------------------------------
 
 Journal.Clear()
-
---local lootbag = Items.FindByType(graphicLootbag)
---local lootbag = Player.Backpack
---local lootbag = Items.FindBySerial(Player.Backpack.Serial)
---if lootbag == nil then
---    Messages.Print("No lootbag found!", 69, Player.Serial)
---else
---    Messages.Print("Lootbag found!", 69, Player.Serial)
---end
-
-
+Messages.Print("Starting Dexmaster 5000")
 while true do
     Pause(1)
     AutoAttack()
     AutoHeal()
+    PopPouch()
     ApplyPoison()
     AutoLoot()
-    --local corpse = FindCorpse()
-    --if corpse ~= nil then
-    --    Player.UseObject(corpse.Serial)
-    --    Pause(actionDelay)
-   --     IgnoreCorpse(corpse.Serial)
-   -- end
---    local sortedItemList = GetSortedItemList(lootbag)
-    
---    if AUTOLOOT then 
---        local sortedItemList = GetSortedItemList()
---        if #sortedItemList > 0 then
---            Messages.Print("> " .. sortedItemList[1].Name, 69, Player.Serial)
---            Player.PickUp(sortedItemList[1].Serial, sortedItemList[1].Amount)
---        Player.DropInContainer(lootbag.Serial)
---        Player.DropInContainer(Player.Backpack.Serial)
---            Player.DropInBackpack()
-
---            Pause(actionDelay)
---        end
---    end
-    --if Journal.Contains('You must wait a few') ~= true then
-    --   Journal.Clear()
-	--   Skills.Use('Hiding')
-    --   Pause(3000)
-    --end
 end
