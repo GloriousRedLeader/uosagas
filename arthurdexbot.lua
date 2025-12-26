@@ -10,8 +10,8 @@
 local POUCHES = true
 local POISONS = true
 local BANDAGES = true
---local WEAPON_GRAPHIC = 0x1401
-local WEAPON_GRAPHIC = 0x1405
+local WEAPON_GRAPHIC = 0x1401
+--local WEAPON_GRAPHIC = 0x1405
 
 Messages.Overhead('Healing Started', 34)
 Cooldown = {}; do

@@ -1,3 +1,4 @@
+local FRIEND_SERIALS = { 0x0046C66E, 0x0012705D }
 local actionDelay = 550             -- Milliseconds of delay between actions
 local SKIP_DEMONS = true
 local AUTO_ATTACK = true
@@ -157,6 +158,12 @@ function GetSortedItemList()
 --            goto continue
 --        end
 
+        local container = Items.FindBySerial(item.Container)
+
+        if container == nil or container.Name == nil or string.find(container.Name:lower(), "corpse") == nil then
+            goto continue
+        end
+
         if item.Distance == nil or (item.Distance > 2 and item.Distance < 16) then
             goto continue
         end
@@ -200,17 +207,72 @@ function GetSortedItemList()
 end
 -----------------------------------------------------------------
 
-function AutoHeal()
+function AutoHeal()
 
-    if BANDAGES and Player.Hits < Player.HitsMax or Player.IsPoisoned then
-        local bandage = Items.FindByType(0x0E21)
-        if bandage and not Cooldown("BandageSelf") then
+    if Cooldown("BandageSelf") then
+        return
+    end
+
+    local bandage = Items.FindByType(0x0E21)
+    if not bandage then return end -- No bandages, no healing
+
+    -- 1. Check Self First
+    if Player.Hits < Player.HitsMax or Player.IsPoisoned then
             if Player.UseObject(bandage.Serial) then
                 if Targeting.WaitForTarget(500) then
                     Targeting.TargetSelf()
-                    Cooldown("BandageSelf", (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100)
+                    -- Standard self-heal formula based on Dex
+                    local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
+                    Messages.Print("Healing self")
+                    Cooldown("BandageSelf", selfDelay)
                 end
             end
+        return -- Prioritize self; exit if self-healing is needed/active
+    end
+
+    -- 2. Check Allies if Self is Healthy
+    for _, serial in ipairs(FRIEND_SERIALS) do
+        -- Find the mobile object for this serial
+        local ally = Mobiles.FindBySerial(serial)
+        
+        -- Check if ally exists, is alive, in range (2 tiles), and missing > 10% HP
+        if ally and ally.Hits > 0 and ally.Distance <= 1 then
+            local hpPercent = (ally.Hits / ally.HitsMax) * 100
+            
+            if hpPercent <= 90 or ally.IsPoisoned then
+                if not Cooldown("BandageSelf") then -- Shares global bandage cooldown
+                    if Player.UseObject(bandage.Serial) then
+                        if Targeting.WaitForTarget(500) then
+                            Targeting.Target(ally.Serial)
+                            Messages.Print("Healing Friend " .. ally.Name)
+                            -- Use the specific 4-second ally cooldown (4000ms)
+                            Cooldown("BandageSelf", 5000)
+                            break -- Heal one person at a time
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+
+function AutoHeal3()
+
+    if BANDAGES then
+        if Player.Hits < Player.HitsMax or Player.IsPoisoned then
+            local bandage = Items.FindByType(0x0E21)
+            if bandage and not Cooldown("BandageSelf") then
+                if Player.UseObject(bandage.Serial) then
+                    if Targeting.WaitForTarget(500) then
+                        Targeting.TargetSelf()
+                        Cooldown("BandageSelf", (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100)
+                    end
+                end
+            end
+       
+            
         end
     end
 end
