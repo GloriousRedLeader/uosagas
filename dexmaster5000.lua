@@ -6,7 +6,7 @@
 -- Milliseconds of delay between actions
 local actionDelay = 550             
 
--- Will auto attack monsters so you dont have too. Warning: Will
+-- Will auto attack monsters so you dont have to. Warning: Will
 -- attack grays and reds  if you configure it!
 local AUTO_ATTACK = true
 
