@@ -1,18 +1,45 @@
-local FRIEND_SERIALS = { 0x0046C66E, 0x0012705D }
-local actionDelay = 550             -- Milliseconds of delay between actions
-local SKIP_DEMONS = true
+
+------------------------------------------------------------------------------------
+-- START OPTIONS for AUTO DEXER / ARCHER / HEALER / AUTOLOOTER / POUCHPOPPER
+-- by OMG Arturo
+------------------------------------------------------------------------------------
+
+-- Milliseconds of delay between actions
+local actionDelay = 550             
+
+-- Will auto attack monsters so you dont have too. Warning: Will
+-- attack grays and reds  if you configure it!
 local AUTO_ATTACK = true
-local AUTO_ATTACK_REDS = true         -- Auto attack reds
+
+-- When AUTO_ATTACK = true, this will attack red players and MOBS!
+local AUTO_ATTACK_REDS = true        
+
+-- When AUTO_ATTACK = true, this will NOT attack demons because mages.
+local SKIP_DEMONS = true
+
+-- Auto apply poison to blade to WEAPON_GRAPHIC.
 local POISONS = true
-local AUTOLOOT = true
+
+-- Required when POISONS = true. Only poison THIS weapon graphic because 
+-- poisoners dont always want to poison EVERY weapon. For example switch 
+-- to a war fork on mobs that are immune.
+--local WEAPON_GRAPHIC = 0x1405 -- Fork
+local WEAPON_GRAPHIC = 0x1401 -- Kryss
+
+-- Whether to heal self (or friends if serial is provided below)
 local BANDAGES = true
+
+-- Heal damaged friend by their serial if they are close.
+-- Only applicable when BANDAGES = true
+local FRIEND_SERIALS = { 0x0046C66E, 0x0012705D }
+
+-- Auto pop pouches
 local POUCHES = true
 
--- Fork
---local WEAPON_GRAPHIC = 0x1405
--- Kryss
-local WEAPON_GRAPHIC = 0x1401
+-- Primitive auto looter. Does not scavenge.
+local AUTOLOOT = true
 
+-- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
 {
     -- (highest priority)
@@ -44,6 +71,11 @@ local graphicIdLootableItemPriorityList =
     0x0F3F   -- Arrows
     -- (lowest priority)
 }
+
+------------------------------------------------------------------------------------
+-- END OPTIONS for AUTO DEXER / ARCHER / HEALER / AUTOLOOTER / POUCHPOPPER
+-- by OMG Arturo
+------------------------------------------------------------------------------------
 
 Cooldown = {}; do
     local data = {}
@@ -79,8 +111,6 @@ local graphicIdLootableItemPriorityList =
         end
     })
 end
-
---XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--
 
 local graphicIdLootableSet = {}
 local graphicIdToPriority = {}
