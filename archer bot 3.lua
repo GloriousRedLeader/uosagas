@@ -1,17 +1,44 @@
-local actionDelay = 550             -- Milliseconds of delay between actions
-local SKIP_DEMONS = true
+------------------------------------------------------------------------------------
+-- START OPTIONS for AUTO DEXER / ARCHER / HEALER / AUTOLOOTER / POUCHPOPPER
+-- by OMG Arturo
+------------------------------------------------------------------------------------
+
+-- Milliseconds of delay between actions
+local actionDelay = 550             
+
+-- Will auto attack monsters so you dont have to. Warning: Will
+-- attack grays and reds  if you configure it!
 local AUTO_ATTACK = true
-local AUTO_ATTACK_REDS = true         -- Auto attack reds
+
+-- When AUTO_ATTACK = true, this will attack red players and MOBS!
+local AUTO_ATTACK_REDS = true        
+
+-- When AUTO_ATTACK = true, this will NOT attack demons because mages.
+local SKIP_DEMONS = true
+
+-- Auto apply poison to blade to WEAPON_GRAPHIC.
 local POISONS = true
-local AUTOLOOT = true
+
+-- Required when POISONS = true. Only poison THIS weapon graphic because 
+-- poisoners dont always want to poison EVERY weapon. For example switch 
+-- to a war fork on mobs that are immune.
+local WEAPON_GRAPHIC = 0x1405 -- Fork
+--local WEAPON_GRAPHIC = 0x1401 -- Kryss
+
+-- Whether to heal self (or friends if serial is provided below)
 local BANDAGES = true
+
+-- Heal damaged friend by their serial if they are close.
+-- Only applicable when BANDAGES = true
+local FRIEND_SERIALS = { 0x0046C66E, 0x0012705D }
+
+-- Auto pop pouches
 local POUCHES = true
 
--- Fork
---local WEAPON_GRAPHIC = 0x1405
--- Kryss
-local WEAPON_GRAPHIC = 0x1401
+-- Primitive auto looter. Does not scavenge.
+local AUTOLOOT = true
 
+-- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
 {
     -- (highest priority)
@@ -43,6 +70,11 @@ local graphicIdLootableItemPriorityList =
     0x0F3F   -- Arrows
     -- (lowest priority)
 }
+
+------------------------------------------------------------------------------------
+-- END OPTIONS for AUTO DEXER / ARCHER / HEALER / AUTOLOOTER / POUCHPOPPER
+-- by OMG Arturo
+------------------------------------------------------------------------------------
 
 Cooldown = {}; do
     local data = {}
@@ -78,8 +110,6 @@ local graphicIdLootableItemPriorityList =
         end
     })
 end
-
---XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--XX--
 
 local graphicIdLootableSet = {}
 local graphicIdToPriority = {}
@@ -157,6 +187,12 @@ function GetSortedItemList()
 --            goto continue
 --        end
 
+        local container = Items.FindBySerial(item.Container)
+
+        if container == nil or container.Name == nil or string.find(container.Name:lower(), "corpse") == nil then
+            goto continue
+        end
+
         if item.Distance == nil or (item.Distance > 2 and item.Distance < 16) then
             goto continue
         end
@@ -200,17 +236,72 @@ function GetSortedItemList()
 end
 -----------------------------------------------------------------
 
-function AutoHeal()
+function AutoHeal()
 
-    if BANDAGES and Player.Hits < Player.HitsMax or Player.IsPoisoned then
-        local bandage = Items.FindByType(0x0E21)
-        if bandage and not Cooldown("BandageSelf") then
+    if Cooldown("BandageSelf") then
+        return
+    end
+
+    local bandage = Items.FindByType(0x0E21)
+    if not bandage then return end -- No bandages, no healing
+
+    -- 1. Check Self First
+    if Player.Hits < Player.HitsMax or Player.IsPoisoned then
             if Player.UseObject(bandage.Serial) then
                 if Targeting.WaitForTarget(500) then
                     Targeting.TargetSelf()
-                    Cooldown("BandageSelf", (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100)
+                    -- Standard self-heal formula based on Dex
+                    local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
+                    Messages.Print("Healing self")
+                    Cooldown("BandageSelf", selfDelay)
                 end
             end
+        return -- Prioritize self; exit if self-healing is needed/active
+    end
+
+    -- 2. Check Allies if Self is Healthy
+    for _, serial in ipairs(FRIEND_SERIALS) do
+        -- Find the mobile object for this serial
+        local ally = Mobiles.FindBySerial(serial)
+        
+        -- Check if ally exists, is alive, in range (2 tiles), and missing > 10% HP
+        if ally and ally.Hits > 0 and ally.Distance <= 1 then
+            local hpPercent = (ally.Hits / ally.HitsMax) * 100
+            
+            if hpPercent <= 90 or ally.IsPoisoned then
+                if not Cooldown("BandageSelf") then -- Shares global bandage cooldown
+                    if Player.UseObject(bandage.Serial) then
+                        if Targeting.WaitForTarget(500) then
+                            Targeting.Target(ally.Serial)
+                            Messages.Print("Healing Friend " .. ally.Name)
+                            -- Use the specific 4-second ally cooldown (4000ms)
+                            Cooldown("BandageSelf", 5000)
+                            break -- Heal one person at a time
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+
+function AutoHeal3()
+
+    if BANDAGES then
+        if Player.Hits < Player.HitsMax or Player.IsPoisoned then
+            local bandage = Items.FindByType(0x0E21)
+            if bandage and not Cooldown("BandageSelf") then
+                if Player.UseObject(bandage.Serial) then
+                    if Targeting.WaitForTarget(500) then
+                        Targeting.TargetSelf()
+                        Cooldown("BandageSelf", (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100)
+                    end
+                end
+            end
+       
+            
         end
     end
 end

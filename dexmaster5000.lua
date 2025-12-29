@@ -13,6 +13,10 @@ local AUTO_ATTACK = true
 -- When AUTO_ATTACK = true, this will attack red players and MOBS!
 local AUTO_ATTACK_REDS = true        
 
+-- When AUTO_ATTACK = true and your alchemy skill is >= 100, will auto
+-- throw explode pots at targets every 5 seconds.
+--local EXPLODE_POTS = true
+
 -- When AUTO_ATTACK = true, this will NOT attack demons because mages.
 local SKIP_DEMONS = true
 
@@ -22,8 +26,8 @@ local SKIP_DEMONS = true
 -- Required when POISONS = true. Only poison THIS weapon graphic because 
 -- poisoners dont always want to poison EVERY weapon. For example switch 
 -- to a war fork on mobs that are immune.
---local WEAPON_GRAPHIC = 0x1405 -- Fork
-local WEAPON_GRAPHIC = 0x1401 -- Kryss
+local WEAPON_GRAPHIC = 0x1405 -- Fork
+--local WEAPON_GRAPHIC = 0x1401 -- Kryss
 
 -- Whether to heal self (or friends if serial is provided below)
 local BANDAGES = true
@@ -31,6 +35,7 @@ local BANDAGES = true
 -- Heal damaged friend by their serial if they are close.
 -- Only applicable when BANDAGES = true
 local FRIEND_SERIALS = { 0x0046C66E, 0x0012705D }
+--local FRIEND_NAMES = { "omg arturo", "omg arthur", "omg artie" }
 
 -- Auto pop pouches
 local POUCHES = true
@@ -263,6 +268,7 @@ function AutoHeal()
     for _, serial in ipairs(FRIEND_SERIALS) do
         -- Find the mobile object for this serial
         local ally = Mobiles.FindBySerial(serial)
+        --local ally = Mobiles.FindByName(friendName)
         
         -- Check if ally exists, is alive, in range (2 tiles), and missing > 10% HP
         if ally and ally.Hits > 0 and ally.Distance <= 1 then
@@ -317,6 +323,7 @@ end
 local mobileTarget = nil
 local mobileTargetLast = nil
 local mobileTargetHitpoints = math.huge
+--checkExplodePot = os.clock() + 1
 function AutoAttack()
     if not AUTO_ATTACK then
         return 
@@ -364,10 +371,29 @@ function AutoAttack()
     if mobileTarget ~= nil then
         if mobileTargetLast == nil or mobileTarget.Serial ~= mobileTargetLast.Serial then
             mobileTargetLast = mobileTarget
-            Messages.Print("Attacking...", 69, Player.Serial)
+            Messages.Print("Attacking... " .. mobileTarget.Name, 69, Player.Serial)
             Player.Attack(mobileTarget.Serial)
         end
     end
+
+
+--    if mobileTarget ~= nil and Skills.GetValue("Alchemy") >= 100 and EXPLODE_POTS and os.clock() > checkExplodePot then
+--        pots = Items.FindByID(0x0F0D, Player.Backpack.Serial)
+--        pots = Items.FindByType(0x0F0D)
+
+--        if pots ~= nil then
+--            Messages.Print(pots.Serial)
+--            Items.UseItem(pots.Serial)
+--            Player.UseObjectByType(0x0E21)
+--           Targeting.WaitForTarget(1000)
+--            Targeting.Target(mobileTarget.Serial)
+--            Messages.Print("Throwing Pot")
+--       else
+--            Messages.Print("You have no pots")
+--        end
+--
+--        checkExplodePot = os.clock() + 5
+--    end
 end
 -----------------------------------------------------------------
 checkPoison = os.clock() + 1
