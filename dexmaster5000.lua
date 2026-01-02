@@ -194,7 +194,7 @@ function GetSortedItemList()
 
         local container = Items.FindBySerial(item.Container)
 
-        if container == nil or container.Name == nil or string.find(container.Name:lower(), "corpse") == nil then
+        if container == nil or container.Name == nil or string.find(container.Name:lower(), "corpse") == nil or container.Distance > 2 then
             goto continue
         end
 
@@ -323,12 +323,15 @@ end
 local mobileTarget = nil
 local mobileTargetLast = nil
 local mobileTargetHitpoints = math.huge
+local checkRetarget = os.clock() + 1
+
 --checkExplodePot = os.clock() + 1
 function AutoAttack()
+    mobileTarget = nil
     if not AUTO_ATTACK then
         return 
     end
-    local mobileList = Mobiles.FindByFilter({})
+    local mobileList = Mobiles.FindByFilter({ rangemax=5, dead = false, noterieties = { 0, 3, 4, 5, 6} })
     table.sort(mobileList, compareByDistance)
     for index, mobile in ipairs(mobileList) do
         local mobile = mobileList[index]
@@ -344,6 +347,11 @@ function AutoAttack()
             end
         end
 
+        if mobile.IsDead then
+            Messages.Print("Mobile is dead!!!!")
+            goto continue
+        end
+
         if autoAttackRed == false then
             if mobile.NotorietyFlag == "Murderer" then
                 goto continue
@@ -351,6 +359,10 @@ function AutoAttack()
         end
 
         if mobile.NotorietyFlag == "Innocent" or mobile.NotorietyFlag == "Ally" or mobile.NotorietyFlag == "Invulnerable" then
+            goto continue
+        end
+
+        if mobile.Hits <= 0 then
             goto continue
         end
 
@@ -364,15 +376,20 @@ function AutoAttack()
 
         mobileTargetHitpoints = mobile.Hits
         mobileTarget = mobile
+        --Messages.Print("Breaking")
+        break
+
         ::continue::
+        --Messages.Print("Continuing")
     end
     
     mobileTargetHitpoints = math.huge
     if mobileTarget ~= nil then
-        if mobileTargetLast == nil or mobileTarget.Serial ~= mobileTargetLast.Serial then
+        if mobileTargetLast == nil or mobileTarget.Serial ~= mobileTargetLast.Serial or os.clock() > checkRetarget then
             mobileTargetLast = mobileTarget
             Messages.Print("Attacking... " .. mobileTarget.Name, 69, Player.Serial)
             Player.Attack(mobileTarget.Serial)
+            checkRetarget = os.clock() + 3
         end
     end
 
