@@ -26,8 +26,8 @@ local SKIP_DEMONS = true
 -- Required when POISONS = true. Only poison THIS weapon graphic because 
 -- poisoners dont always want to poison EVERY weapon. For example switch 
 -- to a war fork on mobs that are immune.
-local WEAPON_GRAPHIC = 0x1405 -- Fork
---local WEAPON_GRAPHIC = 0x1401 -- Kryss
+--local WEAPON_GRAPHIC = 0x1405 -- Fork
+local WEAPON_GRAPHIC = 0x1401 -- Kryss
 
 -- Whether to heal self (or friends if serial is provided below)
 local BANDAGES = true
@@ -72,7 +72,9 @@ local graphicIdLootableItemPriorityList =
     0x0F84,   -- Garlic
     0x0F7A,   -- Black Pearl
     0x0F85,   -- Ginseng
-    0x0F3F   -- Arrows
+    0x0F3F,   -- Arrows
+    0x1BFB,   -- Bolts
+--    0x1401    -- Kryss
     -- (lowest priority)
 }
 
