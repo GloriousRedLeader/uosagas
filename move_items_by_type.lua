@@ -1,14 +1,4 @@
---[[
-    UO Sagas
 
-    OMG Arthur
-
-    Moves all items by type from one container to another. This uses graphic id 
-    and not hue. So it will match all items of the same type regardless of color.
-
-    Example: You have 5 agility potions and 5 strength potions in your backpack.
-    Target either one and it will move all 10 to a new container.
---]]
 
 -- Adjust based on latency
 PAUSE_DELAY_MS = 666

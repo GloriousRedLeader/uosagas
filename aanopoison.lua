@@ -21,7 +21,7 @@ local AUTO_ATTACK_REDS = true
 local SKIP_DEMONS = true
 
 -- Auto apply poison to blade to WEAPON_GRAPHIC.
-local POISONS = true
+local POISONS = false
 
 -- Required when POISONS = true. Only poison THIS weapon graphic because 
 -- poisoners dont always want to poison EVERY weapon. For example switch 
@@ -31,9 +31,6 @@ local WEAPON_GRAPHIC = 0x1401 -- Kryss
 
 -- Whether to heal self (or friends if serial is provided below)
 local BANDAGES = true
-
--- IF false will only cross heal
-local HEAL_SELF = true
 
 -- Heal damaged friend by their serial if they are close.
 -- Only applicable when BANDAGES = true
@@ -54,7 +51,6 @@ local graphicIdLootableItemPriorityList =
     0x0E73,  -- Skill Cap Ball
     0xFD8F,  -- Mastery Gem
     0xFD8C,  -- Soul
-    0x2BF7,  -- Mystic Crafting Material
     0xFF3A,  -- Skill Scroll 
     0x9FF8,  -- Paragon Chest
     0x9FF9,  -- Paragon Chest
@@ -257,7 +253,7 @@ function AutoHeal()
     if not bandage then return end -- No bandages, no healing
 
     -- 1. Check Self First
-    if HEAL_SELF and (Player.Hits < Player.HitsMax or Player.IsPoisoned) then
+    if Player.Hits < Player.HitsMax or Player.IsPoisoned then
             if Player.UseObject(bandage.Serial) then
                 if Targeting.WaitForTarget(500) then
                     Targeting.TargetSelf()
@@ -272,10 +268,6 @@ function AutoHeal()
 
     -- 2. Check Allies if Self is Healthy
     for _, serial in ipairs(FRIEND_SERIALS) do
-
-        if serial == Player.Serial then
-            goto continue
-        end
         -- Find the mobile object for this serial
         local ally = Mobiles.FindBySerial(serial)
         --local ally = Mobiles.FindByName(friendName)
@@ -298,7 +290,6 @@ function AutoHeal()
                 end
             end
         end
-        ::continue::
     end
 end
 
@@ -482,7 +473,7 @@ end
 -----------------------------------------------------------------
 
 Journal.Clear()
-Messages.Print("Starting Dexmaster 5000")
+Messages.Print("Starting Dexmaster 5000 NO POISON")
 --while true do
 while not Player.IsDead and not Player.IsHidden do
     Pause(1)

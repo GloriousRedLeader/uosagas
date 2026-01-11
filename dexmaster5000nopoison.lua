@@ -21,7 +21,7 @@ local AUTO_ATTACK_REDS = true
 local SKIP_DEMONS = true
 
 -- Auto apply poison to blade to WEAPON_GRAPHIC.
-local POISONS = true
+local POISONS = false
 
 -- Required when POISONS = true. Only poison THIS weapon graphic because 
 -- poisoners dont always want to poison EVERY weapon. For example switch 
@@ -44,7 +44,7 @@ local FRIEND_SERIALS = { 0x0046C66E, 0x0012705D }
 local POUCHES = true
 
 -- Primitive auto looter. Does not scavenge.
-local AUTOLOOT = true
+local AUTOLOOT = false
 
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
@@ -54,7 +54,6 @@ local graphicIdLootableItemPriorityList =
     0x0E73,  -- Skill Cap Ball
     0xFD8F,  -- Mastery Gem
     0xFD8C,  -- Soul
-    0x2BF7,  -- Mystic Crafting Material
     0xFF3A,  -- Skill Scroll 
     0x9FF8,  -- Paragon Chest
     0x9FF9,  -- Paragon Chest
@@ -482,7 +481,7 @@ end
 -----------------------------------------------------------------
 
 Journal.Clear()
-Messages.Print("Starting Dexmaster 5000")
+Messages.Print("Starting Dexmaster 5000 NO POISON")
 --while true do
 while not Player.IsDead and not Player.IsHidden do
     Pause(1)
