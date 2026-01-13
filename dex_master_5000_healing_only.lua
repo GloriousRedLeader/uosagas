@@ -40,7 +40,8 @@ local HEAL_SELF = true
 local FRIEND_SERIALS = { 
     0x0046C66E, -- omg artie
     0x0012705D, -- omg arthur
-    0x0012DDAB  -- mr karl
+    0x0012DDAB,  -- mr karl
+    0x0013C547, -- Blood Draw
 }
 
 -- Auto pop pouches

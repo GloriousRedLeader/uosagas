@@ -1,14 +1,12 @@
---[[
-    UO Sagas
-
-    OMG Arthur
-
-    Thiefmaster 5000 by omg arturo
-    Stand near a player. Press one button. Steal something.
-    To enable stealing from players you need to be in the thieves guild.
-    To do that you need to have 48 hours logged into the character and have stealing higher than 80.
-    Go to bucks den and type something like 'Perry join'
---]]
+------------------------------------------------------------------------------------
+-- START OPTIONS for 
+--    Thiefmaster 5000 by omg arturo
+--    Stand near a player. Press one button. Steal something.
+--    To enable stealing from players you need to be in the thieves guild.
+--    To do that you need to have 48 hours logged into the character and have stealing higher than 80.
+--    Go to bucks den and type something like 'Perry join'
+-- by OMG Arturo
+------------------------------------------------------------------------------------
 
 -- Actually do stealing. Should be on when you're ready.
 -- Otherwise just helpful for debugging if false
@@ -54,6 +52,11 @@ STEAL_PRIORITY = {
     { soul_gem, "*" },
     { skill_scroll, "*" }
 }
+
+------------------------------------------------------------------------------------
+-- END OPTIONS 
+-- by OMG Arturo
+------------------------------------------------------------------------------------
 
 -- Buffer for items to steal when scanning backpacks
 potential = {}
