@@ -1,17 +1,21 @@
---[[
-    UO Sagas
+------------------------------------------------------------------------------------
+-- START OPTIONS for 
+-- a script that moves all items by type and color from one container 
+-- to another. This uses graphic id and and also hue. 
+-- 
+--  Example: You have 5 trapped pouches (red) and 5 regular pouches (brown). Target a 
+--  trapped pouch and it will only move the red ones.
+-- by OMG Arturo
+------------------------------------------------------------------------------------
 
-    OMG Arthur
-
-    Moves all items by type and color from one container to another. This uses graphic id 
-    and and also hue. 
-
-    Example: You have 5 trapped pouches (red) and 5 regular pouches (brown). Target a 
-    trapped pouch and it will only move the red ones.
---]]
 
 -- Adjust based on latency
 PAUSE_DELAY_MS = 666
+
+------------------------------------------------------------------------------------
+-- END OPTIONS 
+-- by OMG Arturo
+------------------------------------------------------------------------------------
 
 Messages.Print("Move all items by type and color to a new container.", 77)
 Messages.Print("Select an item.", 66)

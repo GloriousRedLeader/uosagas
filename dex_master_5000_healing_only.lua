@@ -8,10 +8,10 @@ local actionDelay = 550
 
 -- Will auto attack monsters so you dont have to. Warning: Will
 -- attack grays and reds  if you configure it!
-local AUTO_ATTACK = true
+local AUTO_ATTACK = false
 
 -- When AUTO_ATTACK = true, this will attack red players and MOBS!
-local AUTO_ATTACK_REDS = true        
+local AUTO_ATTACK_REDS = false        
 
 -- When AUTO_ATTACK = true and your alchemy skill is >= 100, will auto
 -- throw explode pots at targets every 5 seconds.
@@ -37,8 +37,11 @@ local HEAL_SELF = true
 
 -- Heal damaged friend by their serial if they are close.
 -- Only applicable when BANDAGES = true
-local FRIEND_SERIALS = { 0x0046C66E, 0x0012705D }
---local FRIEND_NAMES = { "omg arturo", "omg arthur", "omg artie" }
+local FRIEND_SERIALS = { 
+    0x0046C66E, -- omg artie
+    0x0012705D, -- omg arthur
+    0x0012DDAB  -- mr karl
+}
 
 -- Auto pop pouches
 local POUCHES = true
@@ -481,7 +484,7 @@ end
 -----------------------------------------------------------------
 
 Journal.Clear()
-Messages.Print("Starting Dexmaster 5000 NO POISON")
+Messages.Print("Starting Dexmaster 5000 Healing Only")
 --while true do
 while not Player.IsDead and not Player.IsHidden do
     Pause(1)

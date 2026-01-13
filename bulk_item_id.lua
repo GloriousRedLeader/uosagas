@@ -1,17 +1,13 @@
---[[
-    UO Sagas
-
-    OMG Arthur
-
-    Item ID and sort Grimoires.
-
-    Put all unidentified items in a container. Have a wand in your pack.
-    This will identify all items in the container and put the garbage ones
-    in your pack so you can sell them. The good ones will remain in container.
-
-    Use the REQUIRED variables below to configure which types of things you want to keep.
-    Right now this only works with Grimoires.
---]]
+------------------------------------------------------------------------------------
+-- START OPTIONS for Item ID and sort Grimoires.
+--     Put all unidentified items in a container. Have a wand in your pack.
+--     This will identify all items in the container and put the garbage ones
+--     in your pack so you can sell them. The good ones will remain in container.
+-- 
+--     Use the REQUIRED variables below to configure which types of things you want to keep.
+--     Right now this only works with Grimoires.
+-- by OMG Arturo
+------------------------------------------------------------------------------------
 
 local MOVE_CRAP_ITEMS_TO_PACK = true
 
@@ -54,6 +50,11 @@ local REQUIRED_EVAL = { "Surpassingly", "Eminently", "Exceedingly", "Supremely" 
 local REQUIRED_DAMAGE = { "Force", "Power", "Vanquishing" } 
 
 local ITEM_MOVE_DELAY_MS = 666
+
+------------------------------------------------------------------------------------
+-- END OPTIONS 
+-- by OMG Arturo
+------------------------------------------------------------------------------------
 
 -- Lua doesn't have _in_array
 local function has_value (tab, val)

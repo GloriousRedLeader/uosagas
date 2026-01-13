@@ -1,7 +1,17 @@
+------------------------------------------------------------------------------------
+-- START OPTIONS for 
+--    Moves all items by type from container1 to container2.
+-- by OMG Arturo
+------------------------------------------------------------------------------------
 
 
 -- Adjust based on latency
 PAUSE_DELAY_MS = 666
+
+------------------------------------------------------------------------------------
+-- END OPTIONS 
+-- by OMG Arturo
+------------------------------------------------------------------------------------
 
 Messages.Print("Move all items by type to a new container.", 77)
 Messages.Print("Select an item.", 66)

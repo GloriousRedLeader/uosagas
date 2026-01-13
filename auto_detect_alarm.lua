@@ -1,3 +1,18 @@
+------------------------------------------------------------------------------------
+-- START OPTIONS for Early Warning System. Run on a stealthed player near choke point.
+-- Will send party chat warning when reds / grays are found. Optionally can spam detect.
+-- Will also alert when you are revealed.
+-- by OMG Arturo
+------------------------------------------------------------------------------------
+
+-- Whether to use detect hidden skill
+local USE_DETECT = true
+
+------------------------------------------------------------------------------------
+-- END OPTIONS 
+-- by OMG Arturo
+------------------------------------------------------------------------------------
+
 function findPlayers()
     local all = Mobiles.FindByFilter({
         rangemax = 50,
@@ -18,7 +33,6 @@ end
 
 while true do
     findPlayers()
---while Skills.GetValue('Detecting Hidden') < 120 do
     Skills.Use('Detecting Hidden')
     Targeting.WaitForTarget(1000)
     Targeting.TargetSelf()
