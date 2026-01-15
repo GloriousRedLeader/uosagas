@@ -10,6 +10,9 @@ local actionDelay = 550
 -- attack grays and reds  if you configure it!
 local AUTO_ATTACK = true
 
+-- Tiles to look for bad guys
+local ATTACK_RANGE = 5
+
 -- When AUTO_ATTACK = true, this will attack red players and MOBS!
 local AUTO_ATTACK_REDS = true        
 
@@ -40,6 +43,7 @@ local HEAL_SELF = true
 local FRIEND_SERIALS = { 
     0x0046C66E, -- omg artie
     0x0012705D, -- omg arthur
+    0x003A3990, -- omg arturo
     0x0012DDAB,  -- mr karl
     0x0013C547, -- Blood Draw
 }
@@ -91,6 +95,10 @@ local graphicIdLootableItemPriorityList =
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
+local POISON_IMMUNE_MOBS = {
+    "some_mob_name"
+}
+
 Cooldown = {}; do
     local data = {}
     setmetatable(Cooldown, {
@@ -307,26 +315,6 @@ function AutoHeal()
 end
 
 
-
-function AutoHeal3()
-
-    if BANDAGES then
-        if Player.Hits < Player.HitsMax or Player.IsPoisoned then
-            local bandage = Items.FindByType(0x0E21)
-            if bandage and not Cooldown("BandageSelf") then
-                if Player.UseObject(bandage.Serial) then
-                    if Targeting.WaitForTarget(500) then
-                        Targeting.TargetSelf()
-                        Cooldown("BandageSelf", (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100)
-                    end
-                end
-            end
-       
-            
-        end
-    end
-end
-
 -----------------------------------------------------------------
 
 local function compareByDistance(a, b)
@@ -346,7 +334,7 @@ function AutoAttack()
     if not AUTO_ATTACK then
         return 
     end
-    local mobileList = Mobiles.FindByFilter({ rangemax=5, dead = false, noterieties = { 0, 3, 4, 5, 6} })
+    local mobileList = Mobiles.FindByFilter({ rangemax=ATTACK_RANGE, dead = false, noterieties = { 0, 3, 4, 5, 6} })
     table.sort(mobileList, compareByDistance)
     for index, mobile in ipairs(mobileList) do
         local mobile = mobileList[index]
@@ -357,7 +345,7 @@ function AutoAttack()
         if mobile.Distance == nil then
             goto continue
         else
-            if mobile.Distance > 5 then
+            if mobile.Distance > ATTACK_RANGE then
                 goto continue
             end
         end
@@ -405,6 +393,7 @@ function AutoAttack()
             Messages.Print("Attacking... " .. mobileTarget.Name, 69, Player.Serial)
             Player.Attack(mobileTarget.Serial)
             checkRetarget = os.clock() + 3
+            return mobileTarget
         end
     end
 
@@ -428,9 +417,28 @@ function AutoAttack()
 --    end
 end
 -----------------------------------------------------------------
+
+local function containsString(haystack, needle)
+    for i = 1, #haystack do
+        if haystack[i] == needle then
+            return true
+        end
+    end
+    return false
+end
+
 checkPoison = os.clock() + 1
-function ApplyPoison()
-    if POISONS and os.clock() > checkPoison then
+function ApplyPoison(mobileTarget)
+    if not POISONS then return end
+    if not mobileTarget then return end
+    if containsString(POISON_IMMUNE_MOBS, mobileTarget.Name) then return end
+    if mobileTarget.IsPoisoned then return end
+
+--    if mobileTarget and containsString(POISON_IMMUNE_MOBS, mobileTarget.Name) then return end
+--    if mobileTarget and mobileTarget.IsPoisoned then return end
+
+    -- POISON_IMMUNE_MOBS
+    if os.clock() > checkPoison then
 		wep = Items.FindByLayer(1)
 		if wep ~= nil and wep.Properties ~= nil and wep.Graphic == WEAPON_GRAPHIC then
 			if string.find(wep.Properties, 'Poison') == nil then
@@ -490,9 +498,9 @@ Messages.Print("Starting Dexmaster 5000")
 --while true do
 while not Player.IsDead and not Player.IsHidden do
     Pause(1)
-    AutoAttack()
+    targetMobile = AutoAttack()
     AutoHeal()
     PopPouch()
-    ApplyPoison()
+    ApplyPoison(mobileTarget)
     AutoLoot()
 end
