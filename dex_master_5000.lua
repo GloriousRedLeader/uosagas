@@ -96,7 +96,9 @@ local graphicIdLootableItemPriorityList =
 ------------------------------------------------------------------------------------
 
 local POISON_IMMUNE_MOBS = {
-    "some_mob_name"
+    "a wanderer of the void",
+    "a crystal elemental",
+    "a dread spider"
 }
 
 Cooldown = {}; do

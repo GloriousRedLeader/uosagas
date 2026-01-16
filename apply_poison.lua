@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------------
--- START OPTIONS for script that applies poison to blade
+-- START OPTIONS for script that applies poison to blade
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
