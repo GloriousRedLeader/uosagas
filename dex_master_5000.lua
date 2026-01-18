@@ -46,6 +46,11 @@ local FRIEND_SERIALS = {
     0x003A3990, -- omg arturo
     0x0012DDAB,  -- mr karl
     0x0013C547, -- Blood Draw
+    0x00110988, -- fastball
+    0x001DB49D, -- bash
+    0x003EC94F, -- Bruenor te dwarf
+    0x0040CC3E, -- lady lumps
+    0x00466D56, -- pink floyd
 }
 
 -- Auto pop pouches
@@ -54,11 +59,15 @@ local POUCHES = true
 -- Primitive auto looter. Does not scavenge.
 local AUTOLOOT = true
 
+-- IF this is true and you have over 90 alchemy, will throw pots
+local USE_INFLAMMABLE_POTS = false
+
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
 {
     -- (highest priority)
     0xFDAD,  -- Eren Coin
+    0x0F91,  -- Fragment
     0x0E73,  -- Skill Cap Ball
     0xFD8F,  -- Mastery Gem
     0xFD8C,  -- Soul
@@ -495,6 +504,23 @@ function PopPouch()
 end
 -----------------------------------------------------------------
 
+function UseInflammablePots(targetMobile)
+    
+    if not USE_INFLAMMABLE_POTS then return end 
+    if Skills.GetValue("Alchemy") < 90 then return end
+    if Cooldown("UseInflammablePot") then return end
+    if not targetMobile then return end
+
+    local pot = Items.FindByType(0xFDB3)
+    if not pot then return end -- No cure pots, no healing
+    if pot.Container ~= Player.Backpack.Serial then return end -- sometimes pots may be on ground and far away
+
+    Player.UseObject(pot.Serial)
+    Targeting.WaitForTarget(1000)
+    Targeting.Target(targetMobile.Serial)
+    Cooldown("UseInflammablePot", 10000)
+end
+
 Journal.Clear()
 Messages.Print("Starting Dexmaster 5000")
 --while true do
@@ -504,5 +530,6 @@ while not Player.IsDead and not Player.IsHidden do
     AutoHeal()
     PopPouch()
     ApplyPoison(mobileTarget)
+    UseInflammablePots(mobileTarget)
     AutoLoot()
 end

@@ -64,6 +64,10 @@ local FRIEND_SERIALS = {
     0x003A3990, -- omg arturo
     0x0012DDAB,  -- mr karl
     0x0013C547, -- Blood Draw
+    0x00110988, -- fastball
+    0x001DB49D, -- bash
+    0x003EC94F, -- Bruenor te dwarf
+    0x0040CC3E, -- lady lumps
 }
 
 -- Milliseconds of delay between actions adjust for your latency
@@ -188,6 +192,7 @@ function UseHealPot()
 
     local pot = Items.FindByType(0x0F0C)
     if not pot then return end -- No heal pots, no healing
+    if pot.Container ~= Player.Backpack.Serial then return end -- sometimes pots may be on ground and far away
 
     if Player.Hits / Player.HitsMax < HEAL_POT_MIN_THRESHOLD_HP and not Player.IsPoisoned then
         Messages.Overhead("Drinking Heal", 155, Player.Serial)
@@ -284,6 +289,7 @@ function UseCurePot()
 
     local pot = Items.FindByType(0x0F07)
     if not pot then return end -- No cure pots, no healing
+    if pot.Container ~= Player.Backpack.Serial then return end -- sometimes pots may be on ground and far away
 
     Player.UseObject(pot.Serial)
     Messages.Overhead("Drinking Cure", 1128, Player.Serial)
@@ -296,9 +302,9 @@ function UseCureSpell()
     if Skills.GetValue("Magery") < 70 then return end
 
     if Player.IsPoisoned and Player.Mana >= 11 then
-        Messages.Overhead("Cure self", 1153, Player.Serial)    
+        Messages.Overhead("Cure spell on self", 1153, Player.Serial)    
         Spells.Cast("ArchCure")
-        Targeting.WaitForTarget(1250)
+        Targeting.WaitForTarget(1500)
         Targeting.TargetSelf()
         Pause(ACTION_DELAY)
         return

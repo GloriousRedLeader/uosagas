@@ -46,6 +46,10 @@ local FRIEND_SERIALS = {
     0x003A3990, -- omg arturo
     0x0012DDAB,  -- mr karl
     0x0013C547, -- Blood Draw
+    0x00110988, -- fastball
+    0x001DB49D, -- bash
+    0x003EC94F, -- Bruenor te dwarf
+    0x0040CC3E, -- lady lumps
 }
 
 -- Auto pop pouches
@@ -59,6 +63,7 @@ local graphicIdLootableItemPriorityList =
 {
     -- (highest priority)
     0xFDAD,  -- Eren Coin
+    0x0F91,  -- Fragment
     0x0E73,  -- Skill Cap Ball
     0xFD8F,  -- Mastery Gem
     0xFD8C,  -- Soul
@@ -93,7 +98,13 @@ local graphicIdLootableItemPriorityList =
 -- END OPTIONS for AUTO DEXER / ARCHER / HEALER / AUTOLOOTER / POUCHPOPPER
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
-
+
+local POISON_IMMUNE_MOBS = {
+    "a wanderer of the void",
+    "a crystal elemental",
+    "a dread spider"
+}
+
 Cooldown = {}; do
     local data = {}
     setmetatable(Cooldown, {
@@ -432,8 +443,17 @@ function AutoAttack()
 end
 -----------------------------------------------------------------
 checkPoison = os.clock() + 1
-function ApplyPoison()
-    if POISONS and os.clock() > checkPoison then
+function ApplyPoison(mobileTarget)
+    if not POISONS then return end
+    if not mobileTarget then return end
+    if containsString(POISON_IMMUNE_MOBS, mobileTarget.Name) then return end
+    if mobileTarget.IsPoisoned then return end
+
+--    if mobileTarget and containsString(POISON_IMMUNE_MOBS, mobileTarget.Name) then return end
+--    if mobileTarget and mobileTarget.IsPoisoned then return end
+
+    -- POISON_IMMUNE_MOBS
+    if os.clock() > checkPoison then
 		wep = Items.FindByLayer(1)
 		if wep ~= nil and wep.Properties ~= nil and wep.Graphic == WEAPON_GRAPHIC then
 			if string.find(wep.Properties, 'Poison') == nil then
