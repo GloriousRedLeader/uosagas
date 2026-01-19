@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Milliseconds of delay between actions
-local actionDelay = 550             
+local ACTION_DELAY = 550
 
 -- Will auto attack monsters so you dont have to. Warning: Will
 -- attack grays and reds  if you configure it!
@@ -20,11 +20,14 @@ local AUTO_ATTACK_REDS = true
 -- throw explode pots at targets every 5 seconds.
 --local EXPLODE_POTS = true
 
+-- IF this is true and you have over 90 alchemy, will throw pots
+local USE_INFLAMMABLE_POTS = false
+
 -- When AUTO_ATTACK = true, this will NOT attack demons because mages.
 local SKIP_DEMONS = true
 
 -- Auto apply poison to blade to WEAPON_GRAPHIC.
-local POISONS = true
+local POISONS = true
 
 -- Required when POISONS = true. Only poison THIS weapon graphic because 
 -- poisoners dont always want to poison EVERY weapon. For example switch 
@@ -32,11 +35,16 @@ local SKIP_DEMONS = true
 --local WEAPON_GRAPHIC = 0x1405 -- Fork
 local WEAPON_GRAPHIC = 0x1401 -- Kryss
 
--- Whether to heal self (or friends if serial is provided below)
-local BANDAGES = true
+-- Auto bandage yourself or allies
+-- Cooldown 10 seconds
+local USE_BANDAGES = true
 
--- IF false will only cross heal
-local HEAL_SELF = true
+-- Will use bandages on friends defined in FRIEND_SERIALS below
+local BANDAGES_ON_FRIENDS = true
+
+-- A decimal representing percentage of a friend's health bar. Bandage healing will
+-- only kick in if they are below this threshold, e.g. 0.9  (less than 90%)
+local BANDAGE_FRIENDS_MIN_THRESHOLD_HP = 0.9
 
 -- Heal damaged friend by their serial if they are close.
 -- Only applicable when BANDAGES = true
@@ -55,13 +63,10 @@ local FRIEND_SERIALS = {
 }
 
 -- Auto pop pouches
-local POUCHES = true
+local USE_POUCHES = true
 
 -- Primitive auto looter. Does not scavenge.
 local AUTOLOOT = false
-
--- IF this is true and you have over 90 alchemy, will throw pots
-local USE_INFLAMMABLE_POTS = false
 
 -- IF this is true and you have more than 20 discordance
 local USE_DISCORD = true
@@ -107,7 +112,7 @@ local graphicIdLootableItemPriorityList =
 -- END OPTIONS 
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
-
+
 local POISON_IMMUNE_MOBS = {
     "a wanderer of the void",
     "a crystal elemental",
@@ -119,7 +124,7 @@ local INSTRUMENTS = {
     0x0E9C, -- DRUM
 }
 
-Cooldown = {}; do
+Cooldown = {}; do
     local data = {}
     setmetatable(Cooldown, {
         __call = function(t, k, v)
@@ -153,7 +158,22 @@ local INSTRUMENTS = {
         end
     })
 end
-
+
+local function containsString(haystack, needle)
+    for i = 1, #haystack do
+        if haystack[i] == needle then
+            return true
+        end
+    end
+    return false
+end
+
+local function compareByDistance(a, b)
+    -- This function must return true if 'a' should precede 'b'
+    -- (i.e., if 'a's distance is less than 'b's distance for ascending order)
+    return a.Distance < b.Distance
+end
+
 local graphicIdLootableSet = {}
 local graphicIdToPriority = {}
 for i, graphic in ipairs(graphicIdLootableItemPriorityList) do
@@ -161,7 +181,6 @@ for i, graphic in ipairs(graphicIdLootableItemPriorityList) do
     graphicIdToPriority[graphic] = i
 end
 
------------------------------------------------------------------
 function WordCheckMultiple(str1, keywordString)
     local lowerStr = string.lower(str1)
     for word in string.gmatch(keywordString, "%S+") do
@@ -172,7 +191,7 @@ function WordCheckMultiple(str1, keywordString)
     end
     return true
 end
------------------------------------------------------------------
+
 local serialIdCorpseIgnoreList = {}
 function IgnoreCorpse(serialIdCorpse)
     if #serialIdCorpseIgnoreList >= 50 then
@@ -213,7 +232,7 @@ function FindCorpse()
     end
     return itemCorpse
 end
------------------------------------------------------------------
+
 function GetSortedItemList()
     local seriableIdLootPriorityList = {}
     local itemList = Items.FindByFilter({onground=false})
@@ -260,7 +279,8 @@ function GetSortedItemList()
         if isLockedDown == true then
             goto continue
         end
-        Messages.Print("Found item " .. item.Name .. " in root container " .. item.RootContainer)
+
+        Messages.Print("Found item " .. item.Name .. " in root container " .. item.RootContainer)
 
         table.insert(seriableIdLootPriorityList, item)
         ::continue::
@@ -277,19 +297,17 @@ function GetSortedItemList()
 
     return seriableIdLootPriorityList
 end
------------------------------------------------------------------
 
-function AutoHeal()
-
-    if Cooldown("BandageSelf") then
-        return
-    end
+function UseBandage()
+    if not USE_BANDAGES then return end
+    if Cooldown("BandageSelf") then return end
+    if Skills.GetValue("Healing") < 40 then return end
 
     local bandage = Items.FindByType(0x0E21)
     if not bandage then return end -- No bandages, no healing
 
     -- 1. Check Self First
-    if HEAL_SELF and (Player.Hits < Player.HitsMax or Player.IsPoisoned) then
+    if Player.Hits < Player.HitsMax or Player.IsPoisoned then
             if Player.UseObject(bandage.Serial) then
                 if Targeting.WaitForTarget(500) then
                     Targeting.TargetSelf()
@@ -297,64 +315,56 @@ function AutoHeal()
                     local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
                     Messages.Print("Healing self")
                     Cooldown("BandageSelf", selfDelay)
+                    Pause(ACTION_DELAY)
+                    return 
                 end
             end
         return -- Prioritize self; exit if self-healing is needed/active
     end
 
     -- 2. Check Allies if Self is Healthy
-    for _, serial in ipairs(FRIEND_SERIALS) do
+    if BANDAGES_ON_FRIENDS then
+        for _, serial in ipairs(FRIEND_SERIALS) do
+            if serial == Player.Serial then
+                goto continue
+            end
 
-        if serial == Player.Serial then
-            goto continue
-        end
-        -- Find the mobile object for this serial
-        local ally = Mobiles.FindBySerial(serial)
-        --local ally = Mobiles.FindByName(friendName)
+            -- Find the mobile object for this serial
+            local ally = Mobiles.FindBySerial(serial)
         
-        -- Check if ally exists, is alive, in range (2 tiles), and missing > 10% HP
-        if ally and ally.Hits > 0 and ally.Distance <= 1 then
-            local hpPercent = (ally.Hits / ally.HitsMax) * 100
+            -- Check if ally exists, is alive, in range (2 tiles), and missing > 10% HP
+            if ally and ally.Hits > 0 and ally.Distance <= 1 then
+                local hpPercent = (ally.Hits / ally.HitsMax)
             
-            if hpPercent <= 90 or ally.IsPoisoned then
-                if not Cooldown("BandageSelf") then -- Shares global bandage cooldown
-                    if Player.UseObject(bandage.Serial) then
-                        if Targeting.WaitForTarget(500) then
-                            Targeting.Target(ally.Serial)
-                            Messages.Print("Healing Friend " .. ally.Name)
-                            -- Use the specific 4-second ally cooldown (4000ms)
-                            Cooldown("BandageSelf", 5000)
-                            break -- Heal one person at a time
+                if hpPercent <= BANDAGE_FRIENDS_MIN_THRESHOLD_HP or ally.IsPoisoned then
+                    if not Cooldown("BandageSelf") then -- Shares global bandage cooldown
+                        if Player.UseObject(bandage.Serial) then
+                            if Targeting.WaitForTarget(500) then
+                                Targeting.Target(ally.Serial)
+                                Messages.Print("Healing Friend " .. ally.Name)
+                                Cooldown("BandageSelf", 5000)
+                                Pause(ACTION_DELAY)
+                                return -- Heal one person at a time
+                            end
                         end
                     end
                 end
             end
+            ::continue::
         end
-        ::continue::
     end
-end
-
-
------------------------------------------------------------------
-
-local function compareByDistance(a, b)
-    -- This function must return true if 'a' should precede 'b'
-    -- (i.e., if 'a's distance is less than 'b's distance for ascending order)
-    return a.Distance < b.Distance
+    return false
 end
 
 local mobileTarget = nil
 local mobileTargetLast = nil
 local mobileTargetHitpoints = math.huge
 local checkRetarget = os.clock() + 1
-
 --checkExplodePot = os.clock() + 1
 function AutoAttack()
     mobileTarget = nil
-    if not AUTO_ATTACK then
-        return 
-    end
-    local mobileList = Mobiles.FindByFilter({ rangemax=ATTACK_RANGE, dead = false, noterieties = { 0, 3, 4, 5, 6} })
+    if not AUTO_ATTACK then return end
+    local mobileList = Mobiles.FindByFilter({ rangemax=ATTACK_RANGE, dead = false, notorieties = { 0, 3, 4, 5, 6} })
     table.sort(mobileList, compareByDistance)
     for index, mobile in ipairs(mobileList) do
         local mobile = mobileList[index]
@@ -417,7 +427,6 @@ function AutoAttack()
         end
     end
 
-
 --    if mobileTarget ~= nil and Skills.GetValue("Alchemy") >= 100 and EXPLODE_POTS and os.clock() > checkExplodePot then
 --        pots = Items.FindByID(0x0F0D, Player.Backpack.Serial)
 --        pots = Items.FindByType(0x0F0D)
@@ -436,28 +445,14 @@ function AutoAttack()
 --        checkExplodePot = os.clock() + 5
 --    end
 end
------------------------------------------------------------------
-
-local function containsString(haystack, needle)
-    for i = 1, #haystack do
-        if haystack[i] == needle then
-            return true
-        end
-    end
-    return false
-end
 
 checkPoison = os.clock() + 1
-function ApplyPoison(mobileTarget)
+function ApplyPoison(mobileTarget)
     if not POISONS then return end
     if not mobileTarget then return end
     if containsString(POISON_IMMUNE_MOBS, mobileTarget.Name) then return end
     if mobileTarget.IsPoisoned then return end
 
---    if mobileTarget and containsString(POISON_IMMUNE_MOBS, mobileTarget.Name) then return end
---    if mobileTarget and mobileTarget.IsPoisoned then return end
-
-    -- POISON_IMMUNE_MOBS
     if os.clock() > checkPoison then
 		wep = Items.FindByLayer(1)
 		if wep ~= nil and wep.Properties ~= nil and wep.Graphic == WEAPON_GRAPHIC then
@@ -484,7 +479,6 @@ checkPoison = os.clock() + 1
 	end
 end
 
------------------------------------------------------------------
 function AutoLoot()
     if AUTOLOOT then 
         local sortedItemList = GetSortedItemList()
@@ -492,13 +486,13 @@ function AutoLoot()
             Messages.Print("> " .. sortedItemList[1].Name, 69, Player.Serial)
             Player.PickUp(sortedItemList[1].Serial, sortedItemList[1].Amount)
             Player.DropInBackpack()
-            Pause(actionDelay)
+            Pause(ACTION_DELAY)
         end
     end
 end
------------------------------------------------------------------
+
 function PopPouch()
-   if POUCHES and Player.IsParalyzed then
+   if USE_POUCHES and Player.IsParalyzed then
 		local items = Items.FindByFilter({
 		    graphics = {0x0E79},
 		    hues = {0x0025}
@@ -511,7 +505,6 @@ function PopPouch()
 		end
 	end		
 end
------------------------------------------------------------------
 
 function UseDiscord(mobileTarget)
     if not USE_DISCORD then return end
@@ -539,7 +532,7 @@ function UseDiscord(mobileTarget)
     Targeting.Target(mobileTarget.Serial)
 
     Cooldown("Discord", 7000)
-    Pause(actionDelay)
+    Pause(ACTION_DELAY)
 end
 
 function UseInflammablePots(targetMobile)
@@ -560,11 +553,10 @@ end
 
 Journal.Clear()
 Messages.Print("Starting Dexmaster 5000")
---while true do
 while not Player.IsDead and not Player.IsHidden do
     Pause(1)
     targetMobile = AutoAttack()
-    AutoHeal()
+    UseBandage()
     PopPouch()
     ApplyPoison(mobileTarget)
     UseInflammablePots(mobileTarget)
