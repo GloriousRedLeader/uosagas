@@ -51,16 +51,20 @@ local FRIEND_SERIALS = {
     0x003EC94F, -- Bruenor te dwarf
     0x0040CC3E, -- lady lumps
     0x00466D56, -- pink floyd
+    0x003D131B, -- xufu
 }
 
 -- Auto pop pouches
 local POUCHES = true
 
 -- Primitive auto looter. Does not scavenge.
-local AUTOLOOT = true
+local AUTOLOOT = false
 
 -- IF this is true and you have over 90 alchemy, will throw pots
 local USE_INFLAMMABLE_POTS = false
+
+-- IF this is true and you have more than 20 discordance
+local USE_DISCORD = true
 
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
@@ -107,7 +111,12 @@ local graphicIdLootableItemPriorityList =
 local POISON_IMMUNE_MOBS = {
     "a wanderer of the void",
     "a crystal elemental",
-    "a dread spider"
+    "a dread spider",
+    "a lost soul",
+}
+
+local INSTRUMENTS = {
+    0x0E9C, -- DRUM
 }
 
 Cooldown = {}; do
@@ -504,8 +513,36 @@ function PopPouch()
 end
 -----------------------------------------------------------------
 
+function UseDiscord(mobileTarget)
+    if not USE_DISCORD then return end
+    if Cooldown("Discord") then return end
+    if Player.Hits < 40 then return end
+    if Player.IsPoisoned then return end
+    if not mobileTarget then return end
+    if Skills.GetValue("Discordance") < 20 then return end
+
+    local instrument 
+    for i, graphicId in ipairs(INSTRUMENTS) do
+        instrument = Items.FindByType(graphicId)
+        if instrument ~= nil then break end
+    end
+
+    if not instrument then return end
+
+    Journal.Clear()
+    Spells.Cast('SongOfDiscordance')
+    Targeting.WaitForTarget(1000)
+    if Journal.Contains("What instrument shall you play?") then
+        Targeting.Target(instrument.Serial)
+        Targeting.WaitForTarget(1000)
+    end
+    Targeting.Target(mobileTarget.Serial)
+
+    Cooldown("Discord", 7000)
+    Pause(actionDelay)
+end
+
 function UseInflammablePots(targetMobile)
-    
     if not USE_INFLAMMABLE_POTS then return end 
     if Skills.GetValue("Alchemy") < 90 then return end
     if Cooldown("UseInflammablePot") then return end
@@ -531,5 +568,6 @@ while not Player.IsDead and not Player.IsHidden do
     PopPouch()
     ApplyPoison(mobileTarget)
     UseInflammablePots(mobileTarget)
+    UseDiscord(mobileTarget)
     AutoLoot()
 end
