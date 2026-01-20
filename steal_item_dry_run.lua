@@ -135,6 +135,7 @@ local function scan_container(serial)
     end
 end
 
+local getCloserTimer = os.clock()
 while true do
 	-- This is the magic sauce. We can get all containers around use including
 	-- player backpacks this way.
@@ -161,7 +162,7 @@ while true do
 		itemToSteal = potential[1]
         
 		if STEAL_ENABLED then
-            Messages.Overhead("Going to steal " .. itemToSteal.name, 30, Player.Serial)
+            Messages.Overhead("Steal " .. itemToSteal.name, 30, Player.Serial)
 			Skills.Use("Stealing")
 			Targeting.WaitForTarget(1000)
 			Targeting.Target(itemToSteal.serial)
@@ -175,10 +176,13 @@ while true do
 	if not LOOP_UNTIL_STEAL then
 		break
 	end
-    Pause(50)	
 
-	Messages.Print("Starting over")
-	
+    if os.clock() > getCloserTimer then
+        getCloserTimer = os.clock() + 2
+        Messages.Print("Get closer to a target...")
+    end
+
+    Pause(50)	
 end
 Messages.Print("Done")
 

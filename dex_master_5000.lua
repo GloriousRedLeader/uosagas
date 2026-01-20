@@ -71,7 +71,7 @@ local FRIEND_SERIALS = {
 local USE_POUCHES = true
 
 -- Primitive auto looter. Does not scavenge.
-local AUTOLOOT = false
+local AUTOLOOT = true
 
 -- IF this is true and you have more than 20 discordance
 local USE_DISCORD = true
