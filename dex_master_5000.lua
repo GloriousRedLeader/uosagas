@@ -27,13 +27,18 @@ local USE_INFLAMMABLE_POTS = false
 local SKIP_DEMONS = true
 
 -- Auto apply poison to blade to WEAPON_GRAPHIC.
-local POISONS = true
+local USE_POISONS = true
+
+-- Only apply poison to your weapon if you have a current target and
+-- the current target does not have poison on it already. This option conserves poisons.
+local SMART_POISONING = false
 
 -- Required when POISONS = true. Only poison THIS weapon graphic because 
 -- poisoners dont always want to poison EVERY weapon. For example switch 
 -- to a war fork on mobs that are immune.
 --local WEAPON_GRAPHIC = 0x1405 -- Fork
 local WEAPON_GRAPHIC = 0x1401 -- Kryss
+--local WEAPON_GRAPHIC = 0x0F52 -- dagger
 
 -- Auto bandage yourself or allies
 -- Cooldown 10 seconds
@@ -66,10 +71,13 @@ local FRIEND_SERIALS = {
 local USE_POUCHES = true
 
 -- Primitive auto looter. Does not scavenge.
-local AUTOLOOT = false
+local AUTOLOOT = true
 
 -- IF this is true and you have more than 20 discordance
 local USE_DISCORD = true
+
+-- If music is > 80, will cast this every X seconds
+local USE_SONG_OF_HEALING = true
 
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
@@ -122,6 +130,7 @@ local POISON_IMMUNE_MOBS = {
 
 local INSTRUMENTS = {
     0x0E9C, -- DRUM
+    0x0E9D, -- TAMBOURINE
 }
 
 Cooldown = {}; do
@@ -448,10 +457,10 @@ end
 
 checkPoison = os.clock() + 1
 function ApplyPoison(mobileTarget)
-    if not POISONS then return end
+    if not USE_POISONS then return end
     if not mobileTarget then return end
     if containsString(POISON_IMMUNE_MOBS, mobileTarget.Name) then return end
-    if mobileTarget.IsPoisoned then return end
+    if mobileTarget.IsPoisoned and SMART_POISONING then return end
 
     if os.clock() > checkPoison then
 		wep = Items.FindByLayer(1)
@@ -549,6 +558,33 @@ function UseInflammablePots(targetMobile)
     Targeting.WaitForTarget(1000)
     Targeting.Target(targetMobile.Serial)
     Cooldown("UseInflammablePot", 10000)
+    Pause(ACTION_DELAY)
+end
+
+function UseSongOfHealing()
+    if not USE_SONG_OF_HEALING then return end
+    if Skills.GetValue("Musicianship") < 50 then return end
+    if Cooldown("SongOfHealing") then return end
+    if Player.Hits < 50 then return end
+
+    local instrument 
+    for i, graphicId in ipairs(INSTRUMENTS) do
+        instrument = Items.FindByType(graphicId)
+        if instrument ~= nil then break end
+    end
+
+    if not instrument then return end
+
+    Journal.Clear()
+    Spells.Cast('SongOfHealing')
+    Targeting.WaitForTarget(1000)
+    if Journal.Contains("What instrument shall you play?") then
+        Targeting.Target(instrument.Serial)
+        Targeting.WaitForTarget(1000)
+    end
+
+    Cooldown("SongOfHealing", 35000)
+    Pause(ACTION_DELAY)
 end
 
 Journal.Clear()
@@ -561,5 +597,6 @@ while not Player.IsDead and not Player.IsHidden do
     ApplyPoison(mobileTarget)
     UseInflammablePots(mobileTarget)
     UseDiscord(mobileTarget)
+    UseSongOfHealing()
     AutoLoot()
 end

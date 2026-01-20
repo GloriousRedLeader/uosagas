@@ -48,6 +48,7 @@ local FRIEND_SERIALS = {
 
 local INSTRUMENTS = {
     0x0E9C, -- DRUM
+    0x0E9D, -- TAMBOURINE
 }
 
 Cooldown = {}; do
