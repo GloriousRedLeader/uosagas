@@ -11,7 +11,7 @@ local ACTION_DELAY = 550
 local AUTO_ATTACK = true
 
 -- Tiles to look for bad guys
-local ATTACK_RANGE = 6
+local ATTACK_RANGE = 8
 
 -- When AUTO_ATTACK = true, this will attack red players and MOBS!
 local AUTO_ATTACK_REDS = true        

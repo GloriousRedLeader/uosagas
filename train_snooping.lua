@@ -5,7 +5,8 @@
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
--- n/a
+-- Enable this if you want to remain hidden
+local USE_HIDING = true
 
 ------------------------------------------------------------------------------------
 -- END OPTIONS 
@@ -16,6 +17,10 @@ Messages.Print("Target a player backpack or pack animal")
 
 local pack = Targeting.GetNewTarget()
 while true do
-    Player.UseObject(pack)
+    if USE_HIDING and not Player.IsHidden then
+        Skills.Use("Hiding")
+    else
+        Player.UseObject(pack)
+    end
     Pause(1000)
 end

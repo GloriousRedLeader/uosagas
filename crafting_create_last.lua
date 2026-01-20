@@ -5,8 +5,6 @@
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
-local toolUsed = false  -- Track if tool and pestle has been used already
-
 -- Pick the right one. Will search bags for a tool and use it.
 local CRAFTING_TOOL_GRAPHIC_ID = 0x0E9B    -- Alchemy
 
@@ -14,6 +12,8 @@ local CRAFTING_TOOL_GRAPHIC_ID = 0x0E9B    -- Alchemy
 -- END OPTIONS 
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
+
+local toolUsed = false  -- Track if tool and pestle has been used already
 
 while true do
     -- Open Menu
