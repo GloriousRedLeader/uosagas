@@ -11,7 +11,7 @@ local ACTION_DELAY = 550
 local AUTO_ATTACK = true
 
 -- Tiles to look for bad guys
-local ATTACK_RANGE = 5
+local ATTACK_RANGE = 6
 
 -- When AUTO_ATTACK = true, this will attack red players and MOBS!
 local AUTO_ATTACK_REDS = true        
@@ -71,7 +71,7 @@ local FRIEND_SERIALS = {
 local USE_POUCHES = true
 
 -- Primitive auto looter. Does not scavenge.
-local AUTOLOOT = true
+local AUTOLOOT = false
 
 -- IF this is true and you have more than 20 discordance
 local USE_DISCORD = true
@@ -482,7 +482,7 @@ function ApplyPoison(mobileTarget)
 				end
             end
 		else
-			Messages.Overhead('NO WEAPON found', 34, Player.Serial)
+			Messages.Overhead('Not applying poison', 34, Player.Serial)
 		end    
 		checkPoison = os.clock() + 3
 	end

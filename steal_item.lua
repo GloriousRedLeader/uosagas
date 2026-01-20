@@ -8,27 +8,29 @@
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
+-- I think this will run the script in a loop until an item is stolen.
+-- Probably useful when doing a drive-by steal.
 local LOOP_UNTIL_STEAL = false
 
 -- Actually do stealing. Should be on when you're ready.
 -- Otherwise just helpful for debugging if false
-STEAL_ENABLED = true
+local STEAL_ENABLED = false
 
 -- TODO: Steal first item you see for whatever reason
-STEAL_FIRST = false
+local STEAL_FIRST = false
 
 -- When searching 
-POP_TRAPPED_POUCHES = true
+local POP_TRAPPED_POUCHES = true
 
 -- How heavy of items you want to try to steal
-MAX_WEIGHT = 10
+local MAX_WEIGHT = 10
 
 -- IF a player has more bags and pouches in their backpack, also look in those.
 -- Will avoid trapped pouches unless you specifically enable it above.
-SCAN_SUB_CONTAINERS = true
+local SCAN_SUB_CONTAINERS = true
 
 -- Graphics for searchable subcontainers
-SUB_CONTAINERS = {
+local SUB_CONTAINERS = {
     0x0E79, -- Pouch Graphic
     0x0E75 -- Backpack Graphic
 }
@@ -36,23 +38,27 @@ SUB_CONTAINERS = {
 -- Graphic ID, Name
 -- Ordered most important to least important.
 -- Use the "*" symbol to match anything with that graphic id
-gazer_statuette = 0x20F4
-gem = 0xFD8F
-soul_gem = 0xFD8C
-skill_scroll = 0xFF3A
-STEAL_PRIORITY = {
-    { gazer_statuette, "*" },
-    { gem, "Poisoning Mastery Gem" },
-    { gem, "Eval Int Mastery Gem" },
-    { gem, "Meditation Mastery Gem" },
-    { gem, "Fencing Mastery Gem" },
-    { gem, "Base Mastery Gem" },
-    { gem, "Resist Mastery Gem" },
-    { gem, "Alchemy Mastery Gem" },
-    { skill_scroll, "Poisoning" },
-    { gem, "*" },
-    { soul_gem, "*" },
-    { skill_scroll, "*" }
+local GAZER_STATUETTE = 0x20F4
+local EREN_COIN = 0xFDAD
+local FRAGMENT =  0x0F91
+local SOUL = 0xFD8C
+local GEM = 0xFD8F
+local SKILL_SCROLL = 0xFF3A
+
+local STEAL_PRIORITY = {
+    { GAZER_STATUETTE, "*" },
+    { EREN_COIN, "*" },
+    { FRAGMENT, "*" },
+    { SOUL, "*" },
+    { GEM, "Poisoning Mastery Gem" },
+    { GEM, "Eval Int Mastery Gem" },
+    { GEM, "Meditation Mastery Gem" },
+    { GEM, "Fencing Mastery Gem" },
+    { GEM, "Base Mastery Gem" },
+    { GEM, "Resist Mastery Gem" },
+    { GEM, "Alchemy Mastery Gem" },
+    { SKILL_SCROLL, "Poisoning" },
+    { GEM, "*" },
 }
 
 ------------------------------------------------------------------------------------
@@ -70,7 +76,6 @@ local function has_value (tab, val)
             return true
         end
     end
-
     return false
 end
 
@@ -80,7 +85,6 @@ local function get_weight(text)
     if text == nil then
         return 0
     end
-
     local weight = string.match(text, "Weight:%s*(%d+)")
     if weight == nil then
         return 0
@@ -98,15 +102,11 @@ end
 -- See STEAL_PRIORITY
 local function add_to_potential(item)
     for index, p in ipairs(STEAL_PRIORITY) do
- 
         if item.Properties ~= nil then
-            --Messages.Print(item.Properties)
             weight = get_weight(item.Properties)
-            --Messages.Print(weight)
             if p[1] == item.Graphic  and weight <= MAX_WEIGHT then  
                 Messages.Print(p[2])         
                 if string.find(p[2], item.Name) or p[2] == "*" then
-                    --Messages.Print("ITEM P0 " .. tostring(p[0]))
                     table.insert(potential, { rank =  index, serial = item.Serial, name = item.Name, weight = weight })
                     return true
                 end
@@ -122,11 +122,7 @@ local function scan_container(serial)
     Pause(650)
     items = Items.FindInContainer(serial)
     for _, item in ipairs(items) do
-        --Messages.Print(tostring(item.Container))
         if add_to_potential(item) then
-            --Messages.Print(' Should steal ' .. item.Name .. ' ')
-            --Messages.Print('Weight: ' .. tostring(get_weight(item.Properties)))
-            --table.insert(potential, item.Serial)
         elseif is_container(item) and SCAN_SUB_CONTAINERS then
             if item.Hue == 0x0025 and POP_TRAPPED_POUCHES then
                 Player.UseObject(item.Serial)
@@ -139,59 +135,48 @@ local function scan_container(serial)
     end
 end
 
-
 while true do
-
 	-- This is the magic sauce. We can get all containers around use including
 	-- player backpacks this way.
-	filter = {onground=false, graphics=0x0E75, rangeMax= 1}
+	filter = {  graphics = 0x0E75, corpse = false, container = true, onground = false }
 
 	backpacks = Items.FindByFilter(filter)
 	for _, backpack in ipairs(backpacks) do
 		if backpack.Serial ~= Player.Backpack.Serial then
 			if backpack.RootContainer ~= Nil then -- Should be other player's serial
 				victim = Mobiles.FindBySerial(backpack.RootContainer)
-				if victim ~= nil and has_value({'Innocent', 'Criminal', 'Murderer'}, victim.NotorietyFlag)  then
+				if victim ~= nil and has_value({'Innocent', 'Criminal', 'Murderer'}, victim.NotorietyFlag) and victim.Distance < 2  then
 					scan_container(backpack.Serial)
 				end
 			end
-
 		end
 	end
 
 	-- We've finished scanning the target. Now steal something.
 	if #potential > 0 then
-		--Messages.Print("Found things to steal!")
-		--Messages.Print(tostring(#potential))
-
-	   -- Messages.Print("Before")
-		--for index, item in ipairs(potential) do
-		 --   Messages.Print(tostring(index) .. " " .. tostring(item.rank) .. " " .. item.name)
-
-	--    end
-		--Messages.Print("After")
 		table.sort(potential, function(a, b)
 			return a.rank < b.rank
 		end)
-	  --  for index, item in ipairs(potential) do
-	  --      Messages.Print(tostring(index) .. " " .. tostring(item.rank) .. " " .. item.name)
-	   -- end
-		itemToSteal = potential[1]
-		Messages.Print("Going to steal " .. itemToSteal.name .. " Rank " .. tostring(itemToSteal.rank) .. " " .. tostring(itemToSteal.weight) .. " stones", 30)
-		Messages.Overhead("Going to steal " .. itemToSteal.name .. " Rank " .. tostring(itemToSteal.rank) .. " " .. tostring(itemToSteal.weight) .. " stones", 30)
 
+		itemToSteal = potential[1]
+        
 		if STEAL_ENABLED then
+            Messages.Overhead("Going to steal " .. itemToSteal.name, 30, Player.Serial)
 			Skills.Use("Stealing")
 			Targeting.WaitForTarget(1000)
 			Targeting.Target(itemToSteal.serial)
-			break
+        else
+            Messages.Overhead("Dry Run Item: " .. itemToSteal.name .. " Rank #" .. tostring(itemToSteal.rank) .. " (" .. tostring(itemToSteal.weight) .. " stones)", 57, Player.Serial)
 		end
+
+        break
 	end
 	
 	if not LOOP_UNTIL_STEAL then
 		break
 	end
-	
+    Pause(50)	
+
 	Messages.Print("Starting over")
 	
 end
