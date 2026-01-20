@@ -1,17 +1,21 @@
 ------------------------------------------------------------------------------------
--- START OPTIONS for script that trains snooping on a pack animal. Not
--- very sophisticated. 
+-- START OPTIONS for script that trains snooping on a targetting pack. Select a player
+-- backpack through their paperdoll. Might work on a pack animal directly too.
+-- not very sophisticated. 
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
-local PACK_ANIMAL_SERAIL = 0x40EED9F5
+-- n/a
 
 ------------------------------------------------------------------------------------
 -- END OPTIONS 
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
+Messages.Print("Target a player backpack or pack animal")
+
+local pack = Targeting.GetNewTarget()
 while true do
-    Player.UseObject(PACK_ANIMAL_SERAIL)
+    Player.UseObject(pack)
     Pause(1000)
 end
