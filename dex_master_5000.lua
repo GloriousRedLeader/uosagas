@@ -31,14 +31,15 @@ local USE_POISONS = true
 
 -- Only apply poison to your weapon if you have a current target and
 -- the current target does not have poison on it already. This option conserves poisons.
-local SMART_POISONING = false
+local SMART_POISONING = true
 
 -- Required when POISONS = true. Only poison THIS weapon graphic because 
 -- poisoners dont always want to poison EVERY weapon. For example switch 
 -- to a war fork on mobs that are immune.
 --local WEAPON_GRAPHIC = 0x1405 -- Fork
-local WEAPON_GRAPHIC = 0x1401 -- Kryss
+--local WEAPON_GRAPHIC = 0x1401 -- Kryss
 --local WEAPON_GRAPHIC = 0x0F52 -- dagger
+local WEAPON_GRAPHIC = 0 -- ANY weapon
 
 -- Auto bandage yourself or allies
 -- Cooldown 10 seconds
@@ -416,6 +417,10 @@ function AutoAttack()
             goto continue
         end
 
+        if containsString(FRIEND_SERIALS, mobile.Serial) then
+            goto continue
+        end
+
         mobileTargetHitpoints = mobile.Hits
         mobileTarget = mobile
         --Messages.Print("Breaking")
@@ -464,7 +469,9 @@ function ApplyPoison(mobileTarget)
 
     if os.clock() > checkPoison then
 		wep = Items.FindByLayer(1)
-		if wep ~= nil and wep.Properties ~= nil and wep.Graphic == WEAPON_GRAPHIC then
+		if wep ~= nil and wep.Properties ~= nil then
+            if WEAPON_GRAPHIC ~= 0 and wep.Graphic ~= WEAPON_GRAPHIC then return end
+
 			if string.find(wep.Properties, 'Poison') == nil then
 				Messages.Overhead("You dont have poison", 44, Player.Serial)
 				
