@@ -11,7 +11,7 @@ local ACTION_DELAY = 550
 local AUTO_ATTACK = true
 
 -- Tiles to look for bad guys
-local ATTACK_RANGE = 8
+local ATTACK_RANGE = 10
 
 -- When AUTO_ATTACK = true, this will attack red players and MOBS!
 local AUTO_ATTACK_REDS = true        
@@ -78,7 +78,18 @@ local AUTOLOOT = true
 local USE_DISCORD = true
 
 -- If music is > 80, will cast this every X seconds
-local USE_SONG_OF_HEALING = false
+local USE_SONG_OF_HEALING = true
+
+-- Recast song of healing every X seconds
+local SONG_OF_HEALING_RECAST = 30
+
+-- If music is > 80, will attempt to cast song of fortune
+local USE_SONG_OF_FORTUNE = true
+
+-- Number of seconds to recast song of fortune. I think it's OK
+-- to cast it often. Even if the buff lasts for 12 minutes, it is
+-- OK to recast every minute just in case the cast fails you don't want to miss out
+local SONG_OF_FORTUNE_RECAST = 30
 
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
@@ -109,7 +120,7 @@ local graphicIdLootableItemPriorityList =
     0x9FF8,  -- Paragon Chest
     0x9FF9,  -- Paragon Chest
     --0x2D9D,  -- Grimoire
-    0x0EED,  -- Gold
+    --0x0EED,  -- Gold
     0x14EC,  -- Treasure Map
     0x573B,  -- Pigments
     --0x0EB2,  -- Lap Harp
@@ -141,6 +152,12 @@ local graphicIdLootableItemPriorityList =
     0x0F3F,   -- Arrows
     0x1BFB,   -- Bolts
     -- (lowest priority)
+}
+
+-- Auto attack won't target these
+local MOBS_TO_IGNORE = {
+    "a giant toad",
+    "a rat"
 }
 
 ------------------------------------------------------------------------------------
@@ -444,6 +461,10 @@ function AutoAttack()
             goto continue
         end
 
+        if containsString(MOBS_TO_IGNORE, mobile.Name) then
+            goto continue
+        end
+
         if containsString(FRIEND_SERIALS, mobile.Serial) then
             goto continue
         end
@@ -617,7 +638,33 @@ function UseSongOfHealing()
         Targeting.WaitForTarget(1000)
     end
 
-    Cooldown("SongOfHealing", 35000)
+    Cooldown("SongOfHealing", SONG_OF_HEALING_RECAST)
+    Pause(ACTION_DELAY)
+end
+
+function UseSongOfFortune()
+    if not USE_SONG_OF_FORTUNE then return end
+    if Skills.GetValue("Musicianship") < 50 then return end
+    if Cooldown("SongOfFortune") then return end
+    if Player.Hits < 50 then return end
+
+    local instrument 
+    for i, graphicId in ipairs(INSTRUMENTS) do
+        instrument = Items.FindByType(graphicId)
+        if instrument ~= nil then break end
+    end
+
+    if not instrument then return end
+
+    Journal.Clear()
+    Spells.Cast('SongOfFortune')
+    Targeting.WaitForTarget(1000)
+    if Journal.Contains("What instrument shall you play?") then
+        Targeting.Target(instrument.Serial)
+        Targeting.WaitForTarget(1000)
+    end
+
+    Cooldown("SongOfFortune", SONG_OF_FORTUNE_RECAST)
     Pause(ACTION_DELAY)
 end
 
@@ -632,5 +679,6 @@ while not Player.IsDead and not Player.IsHidden do
     UseInflammablePots(mobileTarget)
     UseDiscord(mobileTarget)
     UseSongOfHealing()
+    UseSongOfFortune()
     AutoLoot()
 end
