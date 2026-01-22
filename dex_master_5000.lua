@@ -107,21 +107,36 @@ local graphicIdLootableItemPriorityList =
     0x9FF8,  -- Paragon Chest
     0x9FF9,  -- Paragon Chest
     --0x2D9D,  -- Grimoire
-    --0x14EC,  -- Treasure Map
+    0x0EED,  -- Gold
+    0x14EC,  -- Treasure Map
     0x573B,  -- Pigments
     --0x0EB2,  -- Lap Harp
     --0x0EB1,  -- Standing Harp
     --0x0EB3,  -- Lute
     --0x0E9D,  -- Tambourine
     --0x0E9E,  -- Tambourine
-    0x0E9C,  -- Drum
+    --0x0E9C,  -- Drum
     0x0F26,  -- Diamond
     0x0F10,  -- Emerald
+    0x0F16,  -- Amethyst
+    0x0F10,  -- Emerald
+    0x0F19,  -- Saphire
+    0x0F25,  -- Amber
     --0x26B4,  -- Daemon Scales
     --0x0F7E,  -- Bones
     --0xFCA9,  -- Hardened Resin
     --0x318B,  -- Enchanted Bark
     0x0E21,  -- Clean Bandage
+    0x0F8D,  -- Spider Silk
+    0x0F86,  -- Mandrake Root
+    0x0F8C,  -- Ash
+    0x0F7B,  -- Blood Moss
+    0x0F88,  -- Night Shade
+    0x0F84,   -- Garlic
+    0x0F7A,   -- Black Pearl
+    0x0F85,   -- Ginseng
+    0x0F3F,   -- Arrows
+    0x1BFB,   -- Bolts
     -- (lowest priority)
 }
 
