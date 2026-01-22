@@ -85,35 +85,43 @@ local graphicIdLootableItemPriorityList =
 {
     -- (highest priority)
     0xFDAD,  -- Eren Coin
-    0x0F91,  -- Fragment
+    0x41E7,  -- Weapon Rack
+    0x41E6,  -- Weapon Rack
+    0x9EE8,  -- Hanging Plate Chest
+    0x241E,  -- Blue Urn
+    0x21FC,  -- Pile Of Skulls
+    0x20D9,  -- Gargoyle Statuette
+    0x5726,  -- Fey Wings
+    0x2109,  -- Ghoul Statuette
+    0x20D3,  -- Daemon Statuette
+    0x20F4,  -- Gazer Statuette
+    0x212F,  -- Giant Toad Statuette
+    0x212C,  -- Duskfen Matriarch Statuette
+    0x20ED,  -- Air Elemental Statuette
+    0x20F3,  -- Fire Elemental Statuette
+    0x2D8A,  -- Changeling Statuette
     0x0E73,  -- Skill Cap Ball
     0xFD8F,  -- Mastery Gem
     0xFD8C,  -- Soul
-    0x2BF7,  -- Mystic Crafting Material
     0xFF3A,  -- Skill Scroll 
     0x9FF8,  -- Paragon Chest
     0x9FF9,  -- Paragon Chest
     --0x2D9D,  -- Grimoire
+    --0x14EC,  -- Treasure Map
     0x573B,  -- Pigments
-    0x0EED,  -- Gold
+    --0x0EB2,  -- Lap Harp
+    --0x0EB1,  -- Standing Harp
+    --0x0EB3,  -- Lute
+    --0x0E9D,  -- Tambourine
+    --0x0E9E,  -- Tambourine
+    0x0E9C,  -- Drum
     0x0F26,  -- Diamond
-    0x0F13,  -- Ruby
-    0x0F16,  -- Amethyst
     0x0F10,  -- Emerald
-    0x0F19,  -- Saphire
-    0x0F25,  -- Amber
-    0x0E21,  -- Bandage
-    0x0F8D,  -- Spider Silk
-    0x0F86,  -- Mandrake Root
-    0x0F8C,  -- Ash
-    0x0F7B,  -- Blood Moss
-    0x0F88,  -- Night Shade
-    0x0F84,   -- Garlic
-    0x0F7A,   -- Black Pearl
-    0x0F85,   -- Ginseng
-    0x0F3F,   -- Arrows
-    0x1BFB,   -- Bolts
---    0x1401    -- Kryss
+    --0x26B4,  -- Daemon Scales
+    --0x0F7E,  -- Bones
+    --0xFCA9,  -- Hardened Resin
+    --0x318B,  -- Enchanted Bark
+    0x0E21,  -- Clean Bandage
     -- (lowest priority)
 }
 
