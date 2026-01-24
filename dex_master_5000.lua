@@ -11,7 +11,7 @@ local ACTION_DELAY = 550
 local AUTO_ATTACK = true
 
 -- Tiles to look for bad guys
-local ATTACK_RANGE = 10
+local ATTACK_RANGE = 5
 
 -- When AUTO_ATTACK = true, this will attack red players and MOBS!
 local AUTO_ATTACK_REDS = true        
@@ -63,6 +63,8 @@ local FRIEND_SERIALS = {
     0x00110988, -- fastball
     0x001DB49D, -- bash
     0x003EC94F, -- Bruenor te dwarf
+    0x003B4020, -- jingle jangle
+    0x0069B641, -- dead on arrival
     0x0040CC3E, -- lady lumps
     0x00466D56, -- pink floyd
     0x003D131B, -- xufu
@@ -78,18 +80,18 @@ local AUTOLOOT = true
 local USE_DISCORD = true
 
 -- If music is > 80, will cast this every X seconds
-local USE_SONG_OF_HEALING = true
+local USE_SONG_OF_HEALING = false
 
 -- Recast song of healing every X seconds
-local SONG_OF_HEALING_RECAST = 30
+local SONG_OF_HEALING_RECAST = 90
 
 -- If music is > 80, will attempt to cast song of fortune
-local USE_SONG_OF_FORTUNE = true
+local USE_SONG_OF_FORTUNE = false
 
 -- Number of seconds to recast song of fortune. I think it's OK
 -- to cast it often. Even if the buff lasts for 12 minutes, it is
 -- OK to recast every minute just in case the cast fails you don't want to miss out
-local SONG_OF_FORTUNE_RECAST = 30
+local SONG_OF_FORTUNE_RECAST = 120
 
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
@@ -120,7 +122,7 @@ local graphicIdLootableItemPriorityList =
     0x9FF8,  -- Paragon Chest
     0x9FF9,  -- Paragon Chest
     --0x2D9D,  -- Grimoire
-    --0x0EED,  -- Gold
+    0x0EED,  -- Gold
     0x14EC,  -- Treasure Map
     0x573B,  -- Pigments
     --0x0EB2,  -- Lap Harp
@@ -156,8 +158,8 @@ local graphicIdLootableItemPriorityList =
 
 -- Auto attack won't target these
 local MOBS_TO_IGNORE = {
-    "a giant toad",
-    "a rat"
+--    "a giant toad",
+--    "a rat"
 }
 
 ------------------------------------------------------------------------------------
@@ -171,6 +173,7 @@ local POISON_IMMUNE_MOBS = {
     "a dread spider",
     "a lost soul",
     "a gate keeper",
+    "a plague beast",
 }
 
 local INSTRUMENTS = {
@@ -457,7 +460,7 @@ function AutoAttack()
             goto continue
         end
 
-        if SKIP_DEMONS and mobile.Graphic == 0x0009 then
+        if SKIP_DEMONS and mobile.Graphic == 0x0009 and mobile.Hue == 0x0000 then
             goto continue
         end
 
