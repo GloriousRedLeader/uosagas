@@ -6,6 +6,11 @@
 -- Milliseconds of delay between actions
 local ACTION_DELAY = 550
 
+-- Auto-pickup mushrooms when you are out of combat (no current enemy selected)
+-- You also need to be above 80 health, not poisoned, etc. This is true for a lot of
+-- these non-essential functions so heals and such can be prioritized.
+local PICKUP_MUSHROOMS = true
+
 -- Will auto attack monsters so you dont have to. Warning: Will
 -- attack grays and reds  if you configure it!
 local AUTO_ATTACK = true
@@ -102,6 +107,7 @@ local graphicIdLootableItemPriorityList =
     0x2BF7,  -- Mystic Crafting Material
     0x41E7,  -- Weapon Rack
     0x41E6,  -- Weapon Rack
+    0x9EE7,  -- Hanging Plate Chest
     0x9EE8,  -- Hanging Plate Chest
     0x241E,  -- Blue Urn
     0x21FC,  -- Pile Of Skulls
@@ -138,6 +144,7 @@ local graphicIdLootableItemPriorityList =
     0x0F19,  -- Saphire
     0x0F25,  -- Amber
     0x0F13,  -- Ruby
+    0x0000,  -- Daemon Scales
     --0x26B4,  -- Daemon Scales
     --0x0F7E,  -- Bones
     --0xFCA9,  -- Hardened Resin
@@ -166,6 +173,8 @@ local MOBS_TO_IGNORE = {
 -- END OPTIONS 
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
+
+local MUSHROOM_GRAPHIC_ID = 0xFEBF
 
 local POISON_IMMUNE_MOBS = {
     "a wanderer of the void",
@@ -671,6 +680,17 @@ function UseSongOfFortune()
     Pause(ACTION_DELAY)
 end
 
+function PickupMushrooms(mobileTarget) 
+    if not PICKUP_MUSHROOMS then return end
+    if mobileTarget ~= nil then return end
+    local shrooms = Items.FindByFilter({ graphics = MUSHROOM_GRAPHIC_ID, rangemax = 2, onground = true  })
+    if #shrooms > 0 then
+        Player.UseObject(shrooms[1].Serial)
+        Messages.Overhead("OMG ", 37, shrooms[1].Serial)
+        Pause(ACTION_DELAY)
+    end
+end
+
 Journal.Clear()
 Messages.Print("Starting Dexmaster 5000")
 while not Player.IsDead and not Player.IsHidden do
@@ -683,5 +703,6 @@ while not Player.IsDead and not Player.IsHidden do
     UseDiscord(mobileTarget)
     UseSongOfHealing()
     UseSongOfFortune()
+    PickupMushrooms(mobileTarget)
     AutoLoot()
 end
