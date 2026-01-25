@@ -6,7 +6,8 @@
 ------------------------------------------------------------------------------------
 
 -- Pick the right one. Will search bags for a tool and use it.
-local CRAFTING_TOOL_GRAPHIC_ID = 0x0E9B    -- Alchemy
+--local CRAFTING_TOOL_GRAPHIC_ID = 0x0E9B    -- Alchemy
+local CRAFTING_TOOL_GRAPHIC_ID = 0x0FBF    -- Scribe
 
 ------------------------------------------------------------------------------------
 -- END OPTIONS 
@@ -21,9 +22,9 @@ while true do
         local tool = Items.FindByType(CRAFTING_TOOL_GRAPHIC_ID)
         if tool then
             Player.UseObject(tool.Serial)
-            Messages.Print("Using mortar and pestle to open the gump...")
-            Pause(500)  -- Brief pause to ensure the mortar and pestle is used
-            toolUsed = true  -- Mark the mortar as used
+            Messages.Print("Using " .. tool.Name .. " to open the gump...")
+            Pause(500)  -- Brief pause to ensure the tool is used
+            toolUsed = true  -- Mark the tool as used
         else
             Messages.Print("Mortar and pestle not found!")
         end
@@ -45,9 +46,10 @@ while true do
             Player.UseObject(tool.Serial)
             Messages.Print("Using a new mortar and pestle...")
             Pause(500)  -- Brief pause to ensure it is used
-            toolUsed = false  -- Reset the mortar usage flag
+            toolUsed = false  -- Reset the tool usage flag
         else
-            Messages.Print("Mortar and pestle not found!")
+            Messages.Print("Tool not not found!")
+            Messages.Print("Make sure you have the correct CRAFTING_TOOL_GRAPHIC_ID configured in script.")
         end
         
         -- Clear the journal to avoid repeatedly seeing the same message
