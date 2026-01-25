@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------------------
--- START OPTIONS for IDOC SCANNER. Turn it on. Cruise control.
+-- START OPTIONS for IDOC SCANNER. Turn it on. Cruise control.
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
 -- Add as needed.
 local SIGN_GRAPHICS = {
     0x0BD1,
-    0x0BD2,
+    0x0BD2,
     0x0C0C,
     0x0C0E,
     0x0BC1,
