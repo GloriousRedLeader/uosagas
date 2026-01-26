@@ -21,7 +21,9 @@ local SIGN_GRAPHICS = {
     0x0BC4,
     0x0BDB,
     0x0BC0,
-    0x0BF0
+    0x0BF0,
+    0x0BC3,
+    0x0BB0
 }
 
 ------------------------------------------------------------------------------------
@@ -33,23 +35,23 @@ while true do
     signs = Items.FindByFilter({ graphics = SIGN_GRAPHICS })
     for index, sign in ipairs(signs) do
         if sign ~= nil and sign.Properties ~= nil then
-            if string.find(sign.Properties, 'In Danger') ~= nil then
+            if string.find(sign.Properties, 'Condition: In Danger') ~= nil then
                 Messages.Overhead("IDOC", 37, sign.Serial)
                 Messages.Overhead("IDOC", 37, Player.Serial)
-            elseif string.find(sign.Properties, 'Greatly Worn') ~= nil then
+            elseif string.find(sign.Properties, 'Condition: Greatly Worn') ~= nil then
                 Messages.Overhead("Greatly", 47, sign.Serial)
                 --Messages.Overhead("Greatly", 47, Player.Serial)
-            elseif string.find(sign.Properties, 'Fairly Worn') ~= nil then
+            elseif string.find(sign.Properties, 'Condition: Fairly Worn') ~= nil then
                 Messages.Overhead("Fairly", 57, sign.Serial)
                 --Messages.Overhead("Fairly", 57, Player.Serial)
-            elseif string.find(sign.Properties, 'Somewhat Worn') ~= nil then
+            elseif string.find(sign.Properties, 'Condition: Somewhat Worn') ~= nil then
                 Messages.Overhead("Somewhat", 67, sign.Serial)
-            elseif string.find(sign.Properties, 'Slightly Worn') ~= nil then
+            elseif string.find(sign.Properties, 'Condition: Slightly Worn') ~= nil then
                 Messages.Overhead("Slightly", 67, sign.Serial)
-            elseif string.find(sign.Properties, 'Like New') ~= nil then
+            elseif string.find(sign.Properties, 'Condition: Like New') ~= nil then
                 Messages.Overhead("New", 67, sign.Serial)
             else
-                Messages.Overhead("Unkown", 67, sign.Serial)
+                Messages.Overhead("Unkown", 7, sign.Serial)
             end
         end
     end

@@ -6,8 +6,8 @@
 ------------------------------------------------------------------------------------
 
 -- Pick the right one. Will search bags for a tool and use it.
---local CRAFTING_TOOL_GRAPHIC_ID = 0x0E9B    -- Alchemy
-local CRAFTING_TOOL_GRAPHIC_ID = 0x0FBF    -- Scribe
+local CRAFTING_TOOL_GRAPHIC_ID = 0x0E9B    -- Alchemy
+--local CRAFTING_TOOL_GRAPHIC_ID = 0x0FBF    -- Scribe
 
 ------------------------------------------------------------------------------------
 -- END OPTIONS 
