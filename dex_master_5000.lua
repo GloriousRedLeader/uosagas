@@ -87,13 +87,13 @@ local USE_DISCORD = true
 -- If music is > 80, will cast this every X seconds
 local USE_SONG_OF_HEALING = true
 
--- Recast song of healing every X seconds
+-- Recast song of healing every X ms
 local SONG_OF_HEALING_RECAST = 25000
 
 -- If music is > 80, will attempt to cast song of fortune
 local USE_SONG_OF_FORTUNE = false
 
--- Number of seconds to recast song of fortune. I think it's OK
+-- Number of ms to recast song of fortune. I think it's OK
 -- to cast it often. Even if the buff lasts for 12 minutes, it is
 -- OK to recast every minute just in case the cast fails you don't want to miss out
 local SONG_OF_FORTUNE_RECAST = 120000
