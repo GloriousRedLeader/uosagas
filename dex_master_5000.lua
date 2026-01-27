@@ -85,10 +85,10 @@ local AUTOLOOT = true
 local USE_DISCORD = true
 
 -- If music is > 80, will cast this every X seconds
-local USE_SONG_OF_HEALING = false
+local USE_SONG_OF_HEALING = true
 
 -- Recast song of healing every X seconds
-local SONG_OF_HEALING_RECAST = 90
+local SONG_OF_HEALING_RECAST = 25000
 
 -- If music is > 80, will attempt to cast song of fortune
 local USE_SONG_OF_FORTUNE = false
@@ -96,7 +96,7 @@ local USE_SONG_OF_FORTUNE = false
 -- Number of seconds to recast song of fortune. I think it's OK
 -- to cast it often. Even if the buff lasts for 12 minutes, it is
 -- OK to recast every minute just in case the cast fails you don't want to miss out
-local SONG_OF_FORTUNE_RECAST = 120
+local SONG_OF_FORTUNE_RECAST = 120000
 
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
@@ -258,6 +258,29 @@ function WordCheckMultiple(str1, keywordString)
     return true
 end
 
+function extract_weight(item)
+    -- Pattern explanation:
+    -- .*- matches any character (including newlines due to how Lua handles this in patterns) zero or more times, as few as possible.
+    -- (?:...) - this is a general regex concept, but not directly supported in standard Lua patterns. 
+    -- The approach below uses Lua's native patterns and capture groups.
+
+    -- Attempt to match "Weight: " followed by 1-3 digits. 
+    -- 'Weight:%s*(%d%d?%d?)'
+    -- %s* matches zero or more whitespace characters.
+    -- (%d%d?%d?) captures 1, 2, or 3 digits.
+    local weight_str = string.match(item.Properties, "Weight:%s*(%d%d?%d?) Stone")
+    
+    if weight_str then
+        return tonumber(weight_str) -- Convert the captured string to a number
+    else
+        -- If the "Weight: " pattern isn't found, you might want to return nil or a default value
+        -- depending on your specific needs when it's missing entirely.
+        -- In this case, it returns nil, so you can handle it.
+        return nil
+    end
+end
+
+
 local serialIdCorpseIgnoreList = {}
 function IgnoreCorpse(serialIdCorpse)
     if #serialIdCorpseIgnoreList >= 50 then
@@ -343,6 +366,12 @@ function GetSortedItemList()
 
         local isLockedDown = WordCheckMultiple(item.Properties, "Locked Down")
         if isLockedDown == true then
+            goto continue
+        end
+
+        local weight = extract_weight(item)
+        if weight ~= nil and weight + Player.Weight > Player.MaxWeight then
+            Messages.Overhead("too fat, big heavy .. " .. item.Name .. " (" .. tostring(weight) .. ")", 47, Player.Serial)
             goto continue
         end
 
