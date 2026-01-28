@@ -20,7 +20,7 @@ local STEAL_ENABLED = false
 local STEAL_FIRST = false
 
 -- When searching 
-local POP_TRAPPED_POUCHES = true
+local POP_TRAPPED_POUCHES = false
 
 -- How heavy of items you want to try to steal
 local MAX_WEIGHT = 10

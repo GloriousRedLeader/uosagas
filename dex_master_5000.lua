@@ -98,6 +98,11 @@ local USE_SONG_OF_FORTUNE = false
 -- OK to recast every minute just in case the cast fails you don't want to miss out
 local SONG_OF_FORTUNE_RECAST = 120000
 
+-- When script starts it finds your currently equipped weapon.
+-- It will then check every few seconds to re-equip it if its not 
+-- currently equipped.
+local REEQUIP_WEAPON = true
+
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
 {
@@ -720,6 +725,23 @@ function PickupMushrooms(mobileTarget)
     end
 end
 
+local oneHandedWeapon = nil
+if REEQUIP_WEAPON then
+    oneHandedWeapon = Items.FindByLayer(1)
+    Messages.Print("Found weapon: " .. oneHandedWeapon.Name)
+end
+
+function ReequipWeapon()
+    if not REEQUIP_WEAPON then return end
+    if not oneHandedWeapon then return end
+    if Items.FindByLayer(1) ~= nil then return end
+    if Cooldown("ReequipWeapon") then return end
+
+    Player.Equip(oneHandedWeapon.Serial)
+    Pause(ACTION_DELAY)
+    Cooldown("ReequipWeapon", 1000)
+end
+
 Journal.Clear()
 Messages.Print("Starting Dexmaster 5000")
 while not Player.IsDead and not Player.IsHidden do
@@ -732,6 +754,7 @@ while not Player.IsDead and not Player.IsHidden do
     UseDiscord(mobileTarget)
     UseSongOfHealing()
     UseSongOfFortune()
+    ReequipWeapon()
     PickupMushrooms(mobileTarget)
     AutoLoot()
 end
