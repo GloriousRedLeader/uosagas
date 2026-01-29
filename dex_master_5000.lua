@@ -376,7 +376,10 @@ function GetSortedItemList()
 
         local weight = extract_weight(item)
         if weight ~= nil and weight + Player.Weight > Player.MaxWeight then
-            Messages.Overhead("too fat, big heavy .. " .. item.Name .. " (" .. tostring(weight) .. ")", 47, Player.Serial)
+            if not Cooldown("FatAlert") then
+                Messages.Overhead("too fat, big heavy .. no pick up " .. item.Name .. " (" .. tostring(weight) .. " stones)", 47, Player.Serial)
+                Cooldown("FatAlert", 5000)
+            end
             goto continue
         end
 
@@ -734,7 +737,7 @@ end
 function ReequipWeapon()
     if not REEQUIP_WEAPON then return end
     if not oneHandedWeapon then return end
-    if Items.FindByLayer(1) ~= nil then return end
+    if Items.FindByLayer(1) then return end
     if Cooldown("ReequipWeapon") then return end
 
     Player.Equip(oneHandedWeapon.Serial)
