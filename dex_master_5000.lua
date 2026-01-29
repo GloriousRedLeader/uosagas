@@ -88,7 +88,7 @@ local USE_DISCORD = true
 local USE_SONG_OF_HEALING = true
 
 -- Recast song of healing every X ms
-local SONG_OF_HEALING_RECAST = 25000
+local SONG_OF_HEALING_RECAST = 188 * 1000
 
 -- If music is > 80, will attempt to cast song of fortune
 local USE_SONG_OF_FORTUNE = false
@@ -444,7 +444,7 @@ function UseBandage()
                         if Player.UseObject(bandage.Serial) then
                             if Targeting.WaitForTarget(500) then
                                 Targeting.Target(ally.Serial)
-                                Messages.Print("Healing Friend " .. ally.Name)
+                                Player.Say("+ Healing " .. ally.Name .. " +", 67)
                                 Cooldown("BandageSelf", 5000)
                                 Pause(ACTION_DELAY)
                                 return -- Heal one person at a time
@@ -626,6 +626,7 @@ function UseDiscord(mobileTarget)
     if Player.IsPoisoned then return end
     if not mobileTarget then return end
     if Skills.GetValue("Discordance") < 20 then return end
+    if USE_SONG_OF_HEALING and not Cooldown("SongOfHealing") then return end
 
     local instrument 
     for i, graphicId in ipairs(INSTRUMENTS) do
@@ -687,8 +688,14 @@ function UseSongOfHealing()
         Targeting.WaitForTarget(1000)
     end
 
-    Cooldown("SongOfHealing", SONG_OF_HEALING_RECAST)
     Pause(ACTION_DELAY)
+
+    if Journal.Contains("Your song creates a healing aura around you") then
+        Cooldown("SongOfHealing", SONG_OF_HEALING_RECAST) -- 3:07
+        Player.Say("+ Song of Healing +", 67)
+    elseif Journal.Contains("You are already under the effects of this song") then
+        Cooldown("SongOfHealing", 25 * 1000)
+    end
 end
 
 function UseSongOfFortune()
@@ -696,6 +703,7 @@ function UseSongOfFortune()
     if Skills.GetValue("Musicianship") < 50 then return end
     if Cooldown("SongOfFortune") then return end
     if Player.Hits < 50 then return end
+    if USE_SONG_OF_HEALING and not Cooldown("SongOfHealing") then return end
 
     local instrument 
     for i, graphicId in ipairs(INSTRUMENTS) do
