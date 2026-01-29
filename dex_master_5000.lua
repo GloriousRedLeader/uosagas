@@ -731,7 +731,9 @@ end
 local oneHandedWeapon = nil
 if REEQUIP_WEAPON then
     oneHandedWeapon = Items.FindByLayer(1)
-    Messages.Print("Found weapon: " .. oneHandedWeapon.Name)
+    if oneHandedWeapon then
+        Messages.Print("Found weapon: " .. oneHandedWeapon.Name)
+    end
 end
 
 function ReequipWeapon()
