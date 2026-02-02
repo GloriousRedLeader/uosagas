@@ -193,6 +193,7 @@ local POISON_IMMUNE_MOBS = {
 local INSTRUMENTS = {
     0x0E9C, -- DRUM
     0x0E9D, -- TAMBOURINE
+    0x0EB2, -- HARP
 }
 
 Cooldown = {}; do

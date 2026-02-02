@@ -22,7 +22,7 @@ while true do
         local tool = Items.FindByType(CRAFTING_TOOL_GRAPHIC_ID)
         if tool then
             Player.UseObject(tool.Serial)
-            Messages.Print("Using " .. tool.Name .. " to open the gump...")
+            --Messages.Print("Using " .. tool.Name .. " to open the gump...")
             Pause(500)  -- Brief pause to ensure the tool is used
             toolUsed = true  -- Mark the tool as used
         else
