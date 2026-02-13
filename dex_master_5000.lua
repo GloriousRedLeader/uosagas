@@ -103,6 +103,11 @@ local SONG_OF_FORTUNE_RECAST = 120000
 -- currently equipped.
 local REEQUIP_WEAPON = true
 
+-- Use orange potion when poisoned. Drinking logic:
+-- 1. If 80 alchemy, just drinks
+-- 2. Else it unequips left hand (then re-equips)
+local USE_CURE_POTS = true
+
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
 {
@@ -194,6 +199,7 @@ local INSTRUMENTS = {
     0x0E9C, -- DRUM
     0x0E9D, -- TAMBOURINE
     0x0EB2, -- HARP
+    0x0EB3, -- LUTE
 }
 
 Cooldown = {}; do
@@ -737,12 +743,45 @@ function PickupMushrooms(mobileTarget)
     end
 end
 
-local oneHandedWeapon = nil
-if REEQUIP_WEAPON then
-    oneHandedWeapon = Items.FindByLayer(1)
-    if oneHandedWeapon then
-        Messages.Print("Found weapon: " .. oneHandedWeapon.Name)
+function UseCurePot()
+    if not USE_CURE_POTS then return end
+    if not Player.IsPoisoned then return end
+
+    local pot = Items.FindByType(0x0F07)
+    if not pot then return end -- No cure pots, no healing
+    if pot.Container ~= Player.Backpack.Serial then return end -- sometimes pots may be on ground and far away
+
+    if Skills.GetValue("Alchemy") >= 80 then
+        Player.UseObject(pot.Serial)
+        Messages.Overhead("Drinking Cure", 1128, Player.Serial)
+        Pause(ACTION_DELAY)
+    else
+        local twoHanded = Items.FindByLayer(2)
+        if twoHanded then
+            -- Just unequip shield. We'll drink the cure pot
+            -- next tick. Gets re-equipped by the ReequipShield() 
+            -- function (if player is not poisoned)
+            Messages.Overhead("- Shield -", 37, Player.Serial)
+            Player.PickUp(twoHanded.Serial, twoHanded.Amount)
+            Player.DropInBackpack()
+            Pause(ACTION_DELAY)
+        else
+            Player.UseObject(pot.Serial)
+            Messages.Overhead("Drinking Cure", 1128, Player.Serial)
+            Pause(ACTION_DELAY)
+        end
     end
+    return
+end
+
+local oneHandedWeapon = Items.FindByLayer(1)
+if oneHandedWeapon then
+    Messages.Print("Found weapon: " .. oneHandedWeapon.Name)
+end
+
+local twoHandedWeapon = Items.FindByLayer(2)
+if twoHandedWeapon then
+    Messages.Print("Found 2h weapon: " .. twoHandedWeapon.Name)
 end
 
 function ReequipWeapon()
@@ -756,6 +795,17 @@ function ReequipWeapon()
     Cooldown("ReequipWeapon", 1000)
 end
 
+function ReequipShield()
+    if not twoHandedWeapon then return end
+    if Items.FindByLayer(2) then return end
+    if Player.IsPoisoned then return end
+    if Cooldown("ReequipShield") then return end
+
+    Player.Equip(twoHandedWeapon.Serial)
+    Pause(ACTION_DELAY)
+    Cooldown("ReequipShield", 2000)
+end
+
 Journal.Clear()
 Messages.Print("Starting Dexmaster 5000")
 while not Player.IsDead and not Player.IsHidden do
@@ -763,12 +813,14 @@ while not Player.IsDead and not Player.IsHidden do
     targetMobile = AutoAttack()
     UseBandage()
     PopPouch()
+    UseCurePot()
     ApplyPoison(mobileTarget)
     UseInflammablePots(mobileTarget)
     UseDiscord(mobileTarget)
     UseSongOfHealing()
     UseSongOfFortune()
     ReequipWeapon()
+    ReequipShield()
     PickupMushrooms(mobileTarget)
     AutoLoot()
 end
