@@ -473,7 +473,7 @@ function UseBandage()
     return false
 end
 
-local mobileTarget = nil
+--local mobileTarget = nil
 local mobileTargetLast = nil
 local mobileTargetHitpoints = math.huge
 local checkRetarget = os.clock() + 1
@@ -545,9 +545,10 @@ function AutoAttack()
             Messages.Print("Attacking... " .. mobileTarget.Name, 69, Player.Serial)
             Player.Attack(mobileTarget.Serial)
             checkRetarget = os.clock() + 3
-            return mobileTarget
+            --return mobileTarget
         end
     end
+    return mobileTarget
 
 --    if mobileTarget ~= nil and Skills.GetValue("Alchemy") >= 100 and EXPLODE_POTS and os.clock() > checkExplodePot then
 --        pots = Items.FindByID(0x0F0D, Player.Backpack.Serial)
