@@ -204,6 +204,7 @@ local POISON_IMMUNE_MOBS = {
 local INSTRUMENTS = {
     0x0E9C, -- DRUM
     0x0E9D, -- TAMBOURINE
+    0x0E9E, -- TAMBOURINE
     0x0EB2, -- HARP
     0x0EB3, -- LUTE
 }
@@ -737,9 +738,10 @@ function UseSongOfFortune(mobileTarget)
     if Journal.Contains("You play the song of fortune") then
         Cooldown("SongOfFortune", SONG_OF_FORTUNE_RECAST) -- 3:07
         Player.Say("+ Song of Fortune +", 67)
-    --elseif Journal.Contains("You already have a luck bonus") then
+    elseif Journal.Contains("You already have a luck bonus") then
+        Cooldown("SongOfFortune", 30 * 1000)
     else
-        Cooldown("SongOfFortune", 10 * 1000)
+        Cooldown("SongOfFortune", 5 * 1000)
     end
 end
 
@@ -775,7 +777,7 @@ function UseSongOfLight(mobileTarget)
         Cooldown("SongOfLight", SONG_OF_LIGHT_RECAST)
         Player.Say("+ Song of Light +", 67)
     else
-        Cooldown("SongOfLight", 10 * 1000)
+        Cooldown("SongOfLight", 5 * 1000)
     end
 end
 
@@ -847,6 +849,7 @@ function ReequipShield()
     if Items.FindByLayer(2) then return end
     if Player.IsPoisoned then return end
     if Cooldown("ReequipShield") then return end
+    if not USE_CURE_POTS then return end
 
     Player.Equip(twoHandedWeapon.Serial)
     Pause(ACTION_DELAY)
