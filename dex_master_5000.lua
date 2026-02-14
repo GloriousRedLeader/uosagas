@@ -91,12 +91,18 @@ local USE_SONG_OF_HEALING = true
 local SONG_OF_HEALING_RECAST = 188 * 1000
 
 -- If music is > 80, will attempt to cast song of fortune
-local USE_SONG_OF_FORTUNE = false
+local USE_SONG_OF_FORTUNE = true
 
 -- Number of ms to recast song of fortune. I think it's OK
 -- to cast it often. Even if the buff lasts for 12 minutes, it is
 -- OK to recast every minute just in case the cast fails you don't want to miss out
-local SONG_OF_FORTUNE_RECAST = 120000
+local SONG_OF_FORTUNE_RECAST = 725 * 1000
+
+-- If music > 80, will attempt to cast song of light
+local USE_SONG_OF_LIGHT = true
+
+-- Number of ms to recast song of light. 
+local SONG_OF_LIGHT_RECAST = 725 * 1000
 
 -- When script starts it finds your currently equipped weapon.
 -- It will then check every few seconds to re-equip it if its not 
@@ -106,7 +112,7 @@ local REEQUIP_WEAPON = true
 -- Use orange potion when poisoned. Drinking logic:
 -- 1. If 80 alchemy, just drinks
 -- 2. Else it unequips left hand (then re-equips)
-local USE_CURE_POTS = true
+local USE_CURE_POTS = false
 
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
 local graphicIdLootableItemPriorityList = 
@@ -470,7 +476,6 @@ local mobileTarget = nil
 local mobileTargetLast = nil
 local mobileTargetHitpoints = math.huge
 local checkRetarget = os.clock() + 1
---checkExplodePot = os.clock() + 1
 function AutoAttack()
     mobileTarget = nil
     if not AUTO_ATTACK then return end
@@ -527,11 +532,9 @@ function AutoAttack()
 
         mobileTargetHitpoints = mobile.Hits
         mobileTarget = mobile
-        --Messages.Print("Breaking")
         break
 
         ::continue::
-        --Messages.Print("Continuing")
     end
     
     mobileTargetHitpoints = math.huge
@@ -701,12 +704,13 @@ function UseSongOfHealing()
         Cooldown("SongOfHealing", SONG_OF_HEALING_RECAST) -- 3:07
         Player.Say("+ Song of Healing +", 67)
     elseif Journal.Contains("You are already under the effects of this song") then
-        Cooldown("SongOfHealing", 25 * 1000)
+        Cooldown("SongOfHealing", 20 * 1000)
     end
 end
 
-function UseSongOfFortune()
+function UseSongOfFortune(mobileTarget)
     if not USE_SONG_OF_FORTUNE then return end
+    if mobileTarget then return end
     if Skills.GetValue("Musicianship") < 50 then return end
     if Cooldown("SongOfFortune") then return end
     if Player.Hits < 50 then return end
@@ -728,8 +732,51 @@ function UseSongOfFortune()
         Targeting.WaitForTarget(1000)
     end
 
-    Cooldown("SongOfFortune", SONG_OF_FORTUNE_RECAST)
     Pause(ACTION_DELAY)
+
+    if Journal.Contains("You play the song of fortune") then
+        Cooldown("SongOfFortune", SONG_OF_FORTUNE_RECAST) -- 3:07
+        Player.Say("+ Song of Fortune +", 67)
+    --elseif Journal.Contains("You already have a luck bonus") then
+    else
+        Cooldown("SongOfFortune", 10 * 1000)
+    end
+end
+
+function UseSongOfLight(mobileTarget)
+    if not USE_SONG_OF_LIGHT then return end
+    if mobileTarget then return end
+    if Skills.GetValue("Musicianship") < 50 then return end
+    if Cooldown("SongOfLight") then return end
+    if Player.Hits < 50 then return end
+    if USE_SONG_OF_HEALING and not Cooldown("SongOfHealing") then return end
+
+    local instrument 
+    for i, graphicId in ipairs(INSTRUMENTS) do
+        instrument = Items.FindByType(graphicId)
+        if instrument ~= nil then break end
+    end
+
+    if not instrument then return end
+
+    Journal.Clear()
+    Spells.Cast('SongOfLight')
+    Targeting.WaitForTarget(1000)
+    if Journal.Contains("What instrument shall you play?") then
+        Targeting.Target(instrument.Serial)
+        Targeting.WaitForTarget(1000)
+    end
+
+    Pause(ACTION_DELAY)
+
+    if Journal.Contains("You already have night sight") then
+        Cooldown("SongOfLight", 10 * 1000)
+    elseif Journal.Contains("You successfully play the song of light") then
+        Cooldown("SongOfLight", SONG_OF_LIGHT_RECAST)
+        Player.Say("+ Song of Light +", 67)
+    else
+        Cooldown("SongOfLight", 10 * 1000)
+    end
 end
 
 function PickupMushrooms(mobileTarget) 
@@ -810,7 +857,7 @@ Journal.Clear()
 Messages.Print("Starting Dexmaster 5000")
 while not Player.IsDead and not Player.IsHidden do
     Pause(1)
-    targetMobile = AutoAttack()
+    mobileTarget = AutoAttack()
     UseBandage()
     PopPouch()
     UseCurePot()
@@ -818,7 +865,8 @@ while not Player.IsDead and not Player.IsHidden do
     UseInflammablePots(mobileTarget)
     UseDiscord(mobileTarget)
     UseSongOfHealing()
-    UseSongOfFortune()
+    UseSongOfFortune(mobileTarget)
+    UseSongOfLight(mobileTarget)
     ReequipWeapon()
     ReequipShield()
     PickupMushrooms(mobileTarget)
