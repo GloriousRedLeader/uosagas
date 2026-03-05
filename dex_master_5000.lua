@@ -73,6 +73,7 @@ local FRIEND_SERIALS = {
     0x0040CC3E, -- lady lumps
     0x00466D56, -- pink floyd
     0x003D131B, -- xufu
+    0x00391EC1, -- chaz
 }
 
 -- Auto pop pouches
