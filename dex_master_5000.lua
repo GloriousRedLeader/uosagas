@@ -70,6 +70,7 @@ local FRIEND_SERIALS = {
     0x003EC94F, -- Bruenor te dwarf
     0x003B4020, -- jingle jangle
     0x0069B641, -- dead on arrival
+    0x006AE324, -- puk ice
     0x0040CC3E, -- lady lumps
     0x00466D56, -- pink floyd
     0x003D131B, -- xufu
@@ -773,8 +774,10 @@ function UseSongOfLight(mobileTarget)
 
     Pause(ACTION_DELAY)
 
-    if Journal.Contains("You already have night sight") then
-        Cooldown("SongOfLight", 10 * 1000)
+    if Journal.Contains("You fail to play the song of light") then
+        Cooldown("SongOfLight", 30 * 1000)
+    --if Journal.Contains("You already have night sight") then
+        --Cooldown("SongOfLight", 10 * 1000)
     elseif Journal.Contains("You successfully play the song of light") then
         Cooldown("SongOfLight", SONG_OF_LIGHT_RECAST)
         Player.Say("+ Song of Light +", 67)
