@@ -393,7 +393,8 @@ function GetSortedItemList()
         local weight = extract_weight(item)
         if weight ~= nil and weight + Player.Weight > Player.MaxWeight then
             if not Cooldown("FatAlert") then
-                Messages.Overhead("too fat, big heavy .. no pick up " .. item.Name .. " (" .. tostring(weight) .. " stones)", 47, Player.Serial)
+                --Messages.Overhead("too fat, big heavy .. no pick up " .. item.Name .. " (" .. tostring(weight) .. " stones)", 47, Player.Serial)
+                Messages.OverheadMobile(Player.Serial, "too fat, big heavy .. no pick up " .. item.Name .. " (" .. tostring(weight) .. " stones)", 47)
                 Cooldown("FatAlert", 5000)
             end
             goto continue
@@ -422,17 +423,22 @@ function UseBandage()
     if Cooldown("BandageSelf") then return end
     if Skills.GetValue("Healing") < 40 then return end
 
+
+
     local bandage = Items.FindByType(0x0E21)
     if not bandage then return end -- No bandages, no healing
 
+
     -- 1. Check Self First
     if Player.Hits < Player.HitsMax or Player.IsPoisoned then
+        Messages.Print("TIME TO HEAL FUCKER")
         if Player.UseObject(bandage.Serial) then
             if Target.WaitForTarget(500) then
                 Target.Self()
                 --                Target.TargetSelf()
                 -- Standard self-heal formula based on Dex
-                local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
+                --local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
+                local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1500
                 Messages.Print("Healing self")
                 Cooldown("BandageSelf", selfDelay)
                 Pause(ACTION_DELAY)
@@ -587,13 +593,15 @@ function ApplyPoison(mobileTarget)
             if WEAPON_GRAPHIC ~= 0 and wep.Graphic ~= WEAPON_GRAPHIC then return end
 
             if string.find(wep.Properties, 'Poison') == nil then
-                Messages.Overhead("You dont have poison", 44, Player.Serial)
+                --Messages.Overhead("You dont have poison", 44, Player.Serial)
+                Messages.OverheadMobile(Player.Serial, 'You dont have poison', 44)
 
                 local poison = Items.FindByType(0x0F0A)
                 if poison ~= nil then
                     local weapon = Items.FindByLayer(1)
                     if weapon ~= nil then
-                        Messages.Overhead("Using Poison", 44, Player.Serial)
+                        --Messages.Overhead("Using Poison", 44, Player.Serial)
+                        Messages.OverheadMobile(Player.Serial, 'Using Poison', 44)
                         Skills.Use("Poisoning")
                         Target.WaitForTarget(1000)
                         Target.TargetSerial(poison.Serial)
@@ -605,7 +613,8 @@ function ApplyPoison(mobileTarget)
                 end
             end
         else
-            Messages.Overhead('Not applying poison', 34, Player.Serial)
+            --Messages.Overhead('Not applying poison', 34, Player.Serial)
+            Messages.OverheadMobile(Player.Serial, 'Not applying poison', 34)
         end
         checkPoison = os.clock() + 3
     end
@@ -799,7 +808,8 @@ function PickupMushrooms(mobileTarget)
     local shrooms = Items.FindByFilter({ graphics = MUSHROOM_GRAPHIC_ID, rangemax = 2, onground = true  })
     if #shrooms > 0 then
         Player.UseObject(shrooms[1].Serial)
-        Messages.Overhead("OMG ", 37, shrooms[1].Serial)
+        --Messages.Overhead("OMG ", 37, shrooms[1].Serial)
+        Messages.OverheadMobile(shrooms[1].Serial, 'OMG', 37)
         Pause(ACTION_DELAY)
     end
 end
@@ -819,7 +829,8 @@ function UseCurePot()
 
     if Skills.GetValue("Alchemy") >= 80 then
         Player.UseObject(pot.Serial)
-        Messages.Overhead("Drinking Cure", 1128, Player.Serial)
+        --Messages.Overhead("Drinking Cure", 1128, Player.Serial)
+        Messages.OverheadMobile(Player.Serial, 'Drinking Cure', 1128)
         Pause(ACTION_DELAY)
     else
         local twoHanded = Items.FindByLayer(2)
@@ -827,13 +838,15 @@ function UseCurePot()
             -- Just unequip shield. We'll drink the cure pot
             -- next tick. Gets re-equipped by the ReequipShield()
             -- function (if player is not poisoned)
-            Messages.Overhead("- Shield -", 37, Player.Serial)
+            --Messages.Overhead("- Shield -", 37, Player.Serial)
+            Messages.OverheadMobile(Player.Serial, '- Shield -', 37)
             Player.PickUp(twoHanded.Serial, twoHanded.Amount)
             Player.DropInBackpack()
             Pause(ACTION_DELAY)
         else
             Player.UseObject(pot.Serial)
-            Messages.Overhead("Drinking Cure", 1128, Player.Serial)
+            --Messages.Overhead("Drinking Cure", 1128, Player.Serial)
+            Messages.OverheadMobile(Player.Serial, 'Drinking Cure', 1128)
             Pause(ACTION_DELAY)
         end
     end
