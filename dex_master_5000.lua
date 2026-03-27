@@ -19,7 +19,7 @@ local AUTO_ATTACK = true
 local ATTACK_RANGE = 5
 
 -- When AUTO_ATTACK = true, this will attack red players and MOBS!
-local AUTO_ATTACK_REDS = true        
+local AUTO_ATTACK_REDS = true
 
 -- When AUTO_ATTACK = true and your alchemy skill is >= 100, will auto
 -- throw explode pots at targets every 5 seconds.
@@ -38,8 +38,8 @@ local USE_POISONS = true
 -- the current target does not have poison on it already. This option conserves poisons.
 local SMART_POISONING = true
 
--- Required when POISONS = true. Only poison THIS weapon graphic because 
--- poisoners dont always want to poison EVERY weapon. For example switch 
+-- Required when POISONS = true. Only poison THIS weapon graphic because
+-- poisoners dont always want to poison EVERY weapon. For example switch
 -- to a war fork on mobs that are immune.
 --local WEAPON_GRAPHIC = 0x1405 -- Fork
 --local WEAPON_GRAPHIC = 0x1401 -- Kryss
@@ -59,7 +59,7 @@ local BANDAGE_FRIENDS_MIN_THRESHOLD_HP = 0.9
 
 -- Heal damaged friend by their serial if they are close.
 -- Only applicable when BANDAGES = true
-local FRIEND_SERIALS = { 
+local FRIEND_SERIALS = {
     0x0046C66E, -- omg artie
     0x0012705D, -- omg arthur
     0x003A3990, -- omg arturo
@@ -103,11 +103,11 @@ local SONG_OF_FORTUNE_RECAST = 725 * 1000
 -- If music > 80, will attempt to cast song of light
 local USE_SONG_OF_LIGHT = true
 
--- Number of ms to recast song of light. 
+-- Number of ms to recast song of light.
 local SONG_OF_LIGHT_RECAST = 725 * 1000
 
 -- When script starts it finds your currently equipped weapon.
--- It will then check every few seconds to re-equip it if its not 
+-- It will then check every few seconds to re-equip it if its not
 -- currently equipped.
 local REEQUIP_WEAPON = true
 
@@ -117,7 +117,7 @@ local REEQUIP_WEAPON = true
 local USE_CURE_POTS = false
 
 -- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
-local graphicIdLootableItemPriorityList = 
+local graphicIdLootableItemPriorityList =
 {
     -- (highest priority)
     0xFDAD,  -- Eren Coin
@@ -142,7 +142,7 @@ local graphicIdLootableItemPriorityList =
     0xFD8C,  -- Soul
     0xFD8F,  -- Mastery Gem
     0x0E73,  -- Skill Cap Ball
-    0xFF3A,  -- Skill Scroll 
+    0xFF3A,  -- Skill Scroll
     0x9FF8,  -- Paragon Chest
     0x9FF9,  -- Paragon Chest
     --0x2D9D,  -- Grimoire
@@ -183,12 +183,12 @@ local graphicIdLootableItemPriorityList =
 
 -- Auto attack won't target these
 local MOBS_TO_IGNORE = {
---    "a giant toad",
---    "a rat"
+    --    "a giant toad",
+    --    "a rat"
 }
 
 ------------------------------------------------------------------------------------
--- END OPTIONS 
+-- END OPTIONS
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
@@ -212,38 +212,38 @@ local INSTRUMENTS = {
 }
 
 Cooldown = {}; do
-    local data = {}
-    setmetatable(Cooldown, {
-        __call = function(t, k, v)
-            if not v then
-                return t[k]
-            end
-            t[k] = v
-        end,
-        __index = function(_, k)
-            local cd = data[k]
-            if not cd then
-                return
-            end
-
-            local v = cd.delay - (os.clock() - cd.clock) * 1000
-            if v < 0 then
-                data[k] = nil
-                v = nil
-            end
-            return v
-        end,
-        __newindex = function(_, k, v)
-            if not v then
-                data[k] = nil
-                return
-            end
-
-            local cd = data[k] or { clock = os.clock() }
-            cd.delay = type(v) == "number" and v > 0 and v or 0 or 0
-            data[k] = cd
+local data = {}
+setmetatable(Cooldown, {
+    __call = function(t, k, v)
+        if not v then
+            return t[k]
         end
-    })
+        t[k] = v
+    end,
+    __index = function(_, k)
+        local cd = data[k]
+        if not cd then
+            return
+        end
+
+        local v = cd.delay - (os.clock() - cd.clock) * 1000
+        if v < 0 then
+            data[k] = nil
+            v = nil
+        end
+        return v
+    end,
+    __newindex = function(_, k, v)
+        if not v then
+            data[k] = nil
+            return
+        end
+
+        local cd = data[k] or { clock = os.clock() }
+        cd.delay = type(v) == "number" and v > 0 and v or 0 or 0
+        data[k] = cd
+    end
+})
 end
 
 local function containsString(haystack, needle)
@@ -282,15 +282,15 @@ end
 function extract_weight(item)
     -- Pattern explanation:
     -- .*- matches any character (including newlines due to how Lua handles this in patterns) zero or more times, as few as possible.
-    -- (?:...) - this is a general regex concept, but not directly supported in standard Lua patterns. 
+    -- (?:...) - this is a general regex concept, but not directly supported in standard Lua patterns.
     -- The approach below uses Lua's native patterns and capture groups.
 
-    -- Attempt to match "Weight: " followed by 1-3 digits. 
+    -- Attempt to match "Weight: " followed by 1-3 digits.
     -- 'Weight:%s*(%d%d?%d?)'
     -- %s* matches zero or more whitespace characters.
     -- (%d%d?%d?) captures 1, 2, or 3 digits.
     local weight_str = string.match(item.Properties, "Weight:%s*(%d%d?%d?) Stone")
-    
+
     if weight_str then
         return tonumber(weight_str) -- Convert the captured string to a number
     else
@@ -355,9 +355,9 @@ function GetSortedItemList()
             goto continue
         end
 
---        if item.RootContainer == lootbag.Serial then
---            goto continue
---        end
+        --        if item.RootContainer == lootbag.Serial then
+        --            goto continue
+        --        end
 
         local container = Items.FindBySerial(item.Container)
 
@@ -427,17 +427,18 @@ function UseBandage()
 
     -- 1. Check Self First
     if Player.Hits < Player.HitsMax or Player.IsPoisoned then
-            if Player.UseObject(bandage.Serial) then
-                if Targeting.WaitForTarget(500) then
-                    Targeting.TargetSelf()
-                    -- Standard self-heal formula based on Dex
-                    local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
-                    Messages.Print("Healing self")
-                    Cooldown("BandageSelf", selfDelay)
-                    Pause(ACTION_DELAY)
-                    return 
-                end
+        if Player.UseObject(bandage.Serial) then
+            if Target.WaitForTarget(500) then
+                Target.Self()
+                --                Target.TargetSelf()
+                -- Standard self-heal formula based on Dex
+                local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
+                Messages.Print("Healing self")
+                Cooldown("BandageSelf", selfDelay)
+                Pause(ACTION_DELAY)
+                return
             end
+        end
         return -- Prioritize self; exit if self-healing is needed/active
     end
 
@@ -450,29 +451,29 @@ function UseBandage()
 
             -- Find the mobile object for this serial
             local ally = Mobiles.FindBySerial(serial)
-        
+
             -- Check if ally exists, is alive, in range (2 tiles), and missing > 10% HP
             if ally and ally.Hits > 0 and ally.Distance <= 1 then
                 local hpPercent = (ally.Hits / ally.HitsMax)
-            
+
                 if hpPercent <= BANDAGE_FRIENDS_MIN_THRESHOLD_HP or ally.IsPoisoned then
                     if not Cooldown("BandageSelf") then -- Shares global bandage cooldown
-                        if Player.UseObject(bandage.Serial) then
-                            if Targeting.WaitForTarget(500) then
-                                Targeting.Target(ally.Serial)
-                                Player.Say("+ Healing " .. ally.Name .. " +", 67)
-                                Cooldown("BandageSelf", 5000)
-                                Pause(ACTION_DELAY)
-                                return -- Heal one person at a time
-                            end
+                    if Player.UseObject(bandage.Serial) then
+                        if Target.WaitForTarget(500) then
+                            Target.TargetSerial(ally.Serial)
+                            Player.Say("+ Healing " .. ally.Name .. " +", 67)
+                            Cooldown("BandageSelf", 5000)
+                            Pause(ACTION_DELAY)
+                            return -- Heal one person at a time
                         end
                     end
                 end
             end
-            ::continue::
         end
+        ::continue::
     end
-    return false
+end
+return false
 end
 
 --local mobileTarget = nil
@@ -525,32 +526,34 @@ function AutoAttack()
             goto continue
         end
 
-        if containsString(MOBS_TO_IGNORE, mobile.Name) then
-            goto continue
-        end
-
-        if containsString(FRIEND_SERIALS, mobile.Serial) then
-            goto continue
-        end
-
-        mobileTargetHitpoints = mobile.Hits
-        mobileTarget = mobile
-        break
-
-        ::continue::
+        if containsString(MOBS_TO_IGNORE, mobile.Name)
+        then
+        goto continue
     end
-    
-    mobileTargetHitpoints = math.huge
-    if mobileTarget ~= nil then
-        if mobileTargetLast == nil or mobileTarget.Serial ~= mobileTargetLast.Serial or os.clock() > checkRetarget then
-            mobileTargetLast = mobileTarget
-            Messages.Print("Attacking... " .. mobileTarget.Name, 69, Player.Serial)
-            Player.Attack(mobileTarget.Serial)
-            checkRetarget = os.clock() + 3
-            --return mobileTarget
-        end
+
+    if containsString(FRIEND_SERIALS, mobile.Serial)
+    then
+    goto continue
+end
+
+mobileTargetHitpoints = mobile.Hits
+mobileTarget = mobile
+break
+
+::continue::
+end
+
+mobileTargetHitpoints = math.huge
+if mobileTarget ~= nil then
+    if mobileTargetLast == nil or mobileTarget.Serial ~= mobileTargetLast.Serial or os.clock() > checkRetarget then
+        mobileTargetLast = mobileTarget
+        Messages.Print("Attacking... " .. mobileTarget.Name, 69, Player.Serial)
+        Player.Attack(mobileTarget.Serial)
+        checkRetarget = os.clock() + 3
+        --return mobileTarget
     end
-    return mobileTarget
+end
+return mobileTarget
 
 --    if mobileTarget ~= nil and Skills.GetValue("Alchemy") >= 100 and EXPLODE_POTS and os.clock() > checkExplodePot then
 --        pots = Items.FindByID(0x0F0D, Player.Backpack.Serial)
@@ -560,8 +563,8 @@ function AutoAttack()
 --            Messages.Print(pots.Serial)
 --            Items.UseItem(pots.Serial)
 --            Player.UseObjectByType(0x0E21)
---           Targeting.WaitForTarget(1000)
---            Targeting.Target(mobileTarget.Serial)
+--           Target.WaitForTarget(1000)
+--            Target.TargetSerial(mobileTarget.Serial)
 --            Messages.Print("Throwing Pot")
 --       else
 --            Messages.Print("You have no pots")
@@ -579,35 +582,37 @@ function ApplyPoison(mobileTarget)
     if mobileTarget.IsPoisoned and SMART_POISONING then return end
 
     if os.clock() > checkPoison then
-		wep = Items.FindByLayer(1)
-		if wep ~= nil and wep.Properties ~= nil then
+        wep = Items.FindByLayer(1)
+        if wep ~= nil and wep.Properties ~= nil then
             if WEAPON_GRAPHIC ~= 0 and wep.Graphic ~= WEAPON_GRAPHIC then return end
 
-			if string.find(wep.Properties, 'Poison') == nil then
-				Messages.Overhead("You dont have poison", 44, Player.Serial)
-				
-				local poison = Items.FindByType(0x0F0A)
-				if poison ~= nil then
-					local weapon = Items.FindByLayer(1)
-					if weapon ~= nil then
-						Messages.Overhead("Using Poison", 44, Player.Serial)
-						Skills.Use("Poisoning")
-						Targeting.WaitForTarget(1000)
-						Targeting.Target(poison.Serial)
-						Targeting.WaitForTarget(1000)
-						Targeting.Target(weapon.Serial)
-					end
-				end
+            if string.find(wep.Properties, 'Poison') == nil then
+                Messages.Overhead("You dont have poison", 44, Player.Serial)
+
+                local poison = Items.FindByType(0x0F0A)
+                if poison ~= nil then
+                    local weapon = Items.FindByLayer(1)
+                    if weapon ~= nil then
+                        Messages.Overhead("Using Poison", 44, Player.Serial)
+                        Skills.Use("Poisoning")
+                        Target.WaitForTarget(1000)
+                        Target.TargetSerial(poison.Serial)
+                        --Target.TargetSerial(poison.Serial)
+                        Target.WaitForTarget(1000)
+                        --                        Target.TargetSerial(weapon.Serial)
+                        Target.TargetSerial(weapon.Serial)
+                    end
+                end
             end
-		else
-			Messages.Overhead('Not applying poison', 34, Player.Serial)
-		end    
-		checkPoison = os.clock() + 3
-	end
+        else
+            Messages.Overhead('Not applying poison', 34, Player.Serial)
+        end
+        checkPoison = os.clock() + 3
+    end
 end
 
 function AutoLoot()
-    if AUTOLOOT then 
+    if AUTOLOOT then
         local sortedItemList = GetSortedItemList()
         if #sortedItemList > 0 then
             Messages.Print("> " .. sortedItemList[1].Name, 69, Player.Serial)
@@ -619,18 +624,18 @@ function AutoLoot()
 end
 
 function PopPouch()
-   if USE_POUCHES and Player.IsParalyzed then
-		local items = Items.FindByFilter({
-		    graphics = {0x0E79},
-		    hues = {0x0025}
-		})
-		for i, item in ipairs(items) do
-		    if item.RootContainer == Player.Serial then
-			Player.UseObject(item.Serial)
-			break
-		    end
-		end
-	end		
+    if USE_POUCHES and Player.IsParalyzed then
+        local items = Items.FindByFilter({
+            graphics = {0x0E79},
+            hues = {0x0025}
+        })
+        for i, item in ipairs(items) do
+            if item.RootContainer == Player.Serial then
+                Player.UseObject(item.Serial)
+                break
+            end
+        end
+    end
 end
 
 function UseDiscord(mobileTarget)
@@ -642,7 +647,7 @@ function UseDiscord(mobileTarget)
     if Skills.GetValue("Discordance") < 20 then return end
     if USE_SONG_OF_HEALING and not Cooldown("SongOfHealing") then return end
 
-    local instrument 
+    local instrument
     for i, graphicId in ipairs(INSTRUMENTS) do
         instrument = Items.FindByType(graphicId)
         if instrument ~= nil then break end
@@ -652,19 +657,19 @@ function UseDiscord(mobileTarget)
 
     Journal.Clear()
     Spells.Cast('SongOfDiscordance')
-    Targeting.WaitForTarget(1000)
+    Target.WaitForTarget(1000)
     if Journal.Contains("What instrument shall you play?") then
-        Targeting.Target(instrument.Serial)
-        Targeting.WaitForTarget(1000)
+        Target.TargetSerial(instrument.Serial)
+        Target.WaitForTarget(1000)
     end
-    Targeting.Target(mobileTarget.Serial)
+    Target.TargetSerial(mobileTarget.Serial)
 
     Cooldown("Discord", 7000)
     Pause(ACTION_DELAY)
 end
 
 function UseInflammablePots(targetMobile)
-    if not USE_INFLAMMABLE_POTS then return end 
+    if not USE_INFLAMMABLE_POTS then return end
     if Skills.GetValue("Alchemy") < 90 then return end
     if Cooldown("UseInflammablePot") then return end
     if not targetMobile then return end
@@ -674,8 +679,8 @@ function UseInflammablePots(targetMobile)
     if pot.Container ~= Player.Backpack.Serial then return end -- sometimes pots may be on ground and far away
 
     Player.UseObject(pot.Serial)
-    Targeting.WaitForTarget(1000)
-    Targeting.Target(targetMobile.Serial)
+    Target.WaitForTarget(1000)
+    Target.TargetSerial(targetMobile.Serial)
     Cooldown("UseInflammablePot", 10000)
     Pause(ACTION_DELAY)
 end
@@ -686,7 +691,7 @@ function UseSongOfHealing()
     if Cooldown("SongOfHealing") then return end
     if Player.Hits < 50 then return end
 
-    local instrument 
+    local instrument
     for i, graphicId in ipairs(INSTRUMENTS) do
         instrument = Items.FindByType(graphicId)
         if instrument ~= nil then break end
@@ -696,16 +701,17 @@ function UseSongOfHealing()
 
     Journal.Clear()
     Spells.Cast('SongOfHealing')
-    Targeting.WaitForTarget(1000)
+    Target.WaitForTarget(1000)
     if Journal.Contains("What instrument shall you play?") then
-        Targeting.Target(instrument.Serial)
-        Targeting.WaitForTarget(1000)
+        Target.TargetSerial(instrument.Serial)
+        Target.WaitForTarget(1000)
     end
 
     Pause(ACTION_DELAY)
 
     if Journal.Contains("Your song creates a healing aura around you") then
-        Cooldown("SongOfHealing", SONG_OF_HEALING_RECAST) -- 3:07
+        Cooldown("SongOfHealing", SONG_OF_HEALING_RECAST)
+        -- 3:07
         Player.Say("+ Song of Healing +", 67)
     elseif Journal.Contains("You are already under the effects of this song") then
         Cooldown("SongOfHealing", 20 * 1000)
@@ -720,7 +726,7 @@ function UseSongOfFortune(mobileTarget)
     if Player.Hits < 50 then return end
     if USE_SONG_OF_HEALING and not Cooldown("SongOfHealing") then return end
 
-    local instrument 
+    local instrument
     for i, graphicId in ipairs(INSTRUMENTS) do
         instrument = Items.FindByType(graphicId)
         if instrument ~= nil then break end
@@ -730,16 +736,17 @@ function UseSongOfFortune(mobileTarget)
 
     Journal.Clear()
     Spells.Cast('SongOfFortune')
-    Targeting.WaitForTarget(1000)
+    Target.WaitForTarget(1000)
     if Journal.Contains("What instrument shall you play?") then
-        Targeting.Target(instrument.Serial)
-        Targeting.WaitForTarget(1000)
+        Target.TargetSerial(instrument.Serial)
+        Target.WaitForTarget(1000)
     end
 
     Pause(ACTION_DELAY)
 
     if Journal.Contains("You play the song of fortune") then
-        Cooldown("SongOfFortune", SONG_OF_FORTUNE_RECAST) -- 3:07
+        Cooldown("SongOfFortune", SONG_OF_FORTUNE_RECAST)
+        -- 3:07
         Player.Say("+ Song of Fortune +", 67)
     elseif Journal.Contains("You already have a luck bonus") then
         Cooldown("SongOfFortune", 30 * 1000)
@@ -756,7 +763,7 @@ function UseSongOfLight(mobileTarget)
     if Player.Hits < 50 then return end
     if USE_SONG_OF_HEALING and not Cooldown("SongOfHealing") then return end
 
-    local instrument 
+    local instrument
     for i, graphicId in ipairs(INSTRUMENTS) do
         instrument = Items.FindByType(graphicId)
         if instrument ~= nil then break end
@@ -766,17 +773,17 @@ function UseSongOfLight(mobileTarget)
 
     Journal.Clear()
     Spells.Cast('SongOfLight')
-    Targeting.WaitForTarget(1000)
+    Target.WaitForTarget(1000)
     if Journal.Contains("What instrument shall you play?") then
-        Targeting.Target(instrument.Serial)
-        Targeting.WaitForTarget(1000)
+        Target.TargetSerial(instrument.Serial)
+        Target.WaitForTarget(1000)
     end
 
     Pause(ACTION_DELAY)
 
     if Journal.Contains("You fail to play the song of light") then
         Cooldown("SongOfLight", 30 * 1000)
-    --if Journal.Contains("You already have night sight") then
+        --if Journal.Contains("You already have night sight") then
         --Cooldown("SongOfLight", 10 * 1000)
     elseif Journal.Contains("You successfully play the song of light") then
         Cooldown("SongOfLight", SONG_OF_LIGHT_RECAST)
@@ -786,7 +793,7 @@ function UseSongOfLight(mobileTarget)
     end
 end
 
-function PickupMushrooms(mobileTarget) 
+function PickupMushrooms(mobileTarget)
     if not PICKUP_MUSHROOMS then return end
     if mobileTarget ~= nil then return end
     local shrooms = Items.FindByFilter({ graphics = MUSHROOM_GRAPHIC_ID, rangemax = 2, onground = true  })
@@ -798,8 +805,13 @@ function PickupMushrooms(mobileTarget)
 end
 
 function UseCurePot()
-    if not USE_CURE_POTS then return end
-    if not Player.IsPoisoned then return end
+    if not USE_CURE_POTS then
+        return
+    end
+
+    if not Player.IsPoisoned then
+        return
+    end
 
     local pot = Items.FindByType(0x0F07)
     if not pot then return end -- No cure pots, no healing
@@ -813,7 +825,7 @@ function UseCurePot()
         local twoHanded = Items.FindByLayer(2)
         if twoHanded then
             -- Just unequip shield. We'll drink the cure pot
-            -- next tick. Gets re-equipped by the ReequipShield() 
+            -- next tick. Gets re-equipped by the ReequipShield()
             -- function (if player is not poisoned)
             Messages.Overhead("- Shield -", 37, Player.Serial)
             Player.PickUp(twoHanded.Serial, twoHanded.Amount)

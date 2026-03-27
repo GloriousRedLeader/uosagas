@@ -65,7 +65,7 @@ while true do
 				-- Skin the corpse
 				Player.UseObject(skinningKnife.Serial)
 				Targeting.WaitForTarget(1000, false)
-				Targeting.Target(corpse.Serial)
+				Targeting.TargetSerial(corpse.Serial)
 				Pause(ACTION_DELAY_MS)
 				
 
