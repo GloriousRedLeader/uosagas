@@ -431,7 +431,6 @@ function UseBandage()
 
     -- 1. Check Self First
     if Player.Hits < Player.HitsMax or Player.IsPoisoned then
-        Messages.Print("TIME TO HEAL FUCKER")
         if Player.UseObject(bandage.Serial) then
             if Target.WaitForTarget(500) then
                 Target.Self()
