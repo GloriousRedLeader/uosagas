@@ -20,11 +20,11 @@ local ACTION_DELAY_MS = 800
 ---------------------------------------------------------
 
 function GetSkinningKnife()
-	for i, item in ipairs(Items.FindByFilter({ graphics = {SKINNING_KNIFE} })) do
-		if item.RootContainer == Player.Serial then
-			return item
-		end
-	end
+    for i, item in ipairs(Items.FindByFilter({ graphics = {SKINNING_KNIFE} })) do
+        if item.RootContainer == Player.Serial then
+            return item
+        end
+    end
 end
 
 ---------------------------------------------------------
@@ -56,37 +56,37 @@ while true do
     if skinningKnife == nil then
         Messages.Overhead("No skinningKnife!", 34, Player.Serial)
         Pause(3000)
-	else
-		local corpses = Items.FindByFilter(corpseFilter)
-		for _, corpse in ipairs(corpses) do
-			if not HasProcessedCorpse(corpse.Serial) then
-				Messages.Overhead("Processing corpse: " .. (corpse.Name or "Unknown"), 69, Player.Serial)
+    else
+        local corpses = Items.FindByFilter(corpseFilter)
+        for _, corpse in ipairs(corpses) do
+            if not HasProcessedCorpse(corpse.Serial) then
+                Messages.Overhead("Processing corpse: " .. (corpse.Name or "Unknown"), 69, Player.Serial)
 
-				-- Skin the corpse
-				Player.UseObject(skinningKnife.Serial)
-				Targeting.WaitForTarget(1000, false)
-				Targeting.TargetSerial(corpse.Serial)
-				Pause(ACTION_DELAY_MS)
-				
+                -- Skin the corpse
+                Player.UseObject(skinningKnife.Serial)
+                Target.WaitForTarget(1000, false)
+                Target.TargetSerial(corpse.Serial)
+                Pause(ACTION_DELAY_MS)
 
-				-- Open the corpse
-				Player.UseObject(corpse.Serial)
-				Pause(ACTION_DELAY_MS)
-				
-				local hides = Items.FindByFilter({ graphics = { 0x1079 } })
-				for _, hide in ipairs(hides) do
-					if hide.RootContainer == Player.Serial then
-						Player.PickUp(hide.Serial, hide.Amount)
-						Player.DropInContainer(corpse.Serial)
-						Pause(ACTION_DELAY_MS)
-					end
-				end
 
-				-- Mark corpse processed so it never repeats
-				MarkCorpseProcessed(corpse.Serial)
-			end
-		end
-	end
-	
+                -- Open the corpse
+                Player.UseObject(corpse.Serial)
+                Pause(ACTION_DELAY_MS)
+
+                local hides = Items.FindByFilter({ graphics = { 0x1079 } })
+                for _, hide in ipairs(hides) do
+                    if hide.RootContainer == Player.Serial then
+                        Player.PickUp(hide.Serial, hide.Amount)
+                        Player.DropInContainer(corpse.Serial)
+                        Pause(ACTION_DELAY_MS)
+                    end
+                end
+
+                -- Mark corpse processed so it never repeats
+                MarkCorpseProcessed(corpse.Serial)
+            end
+        end
+    end
+
     Pause(250)
 end
