@@ -84,6 +84,9 @@ local USE_POUCHES = true
 -- Primitive auto looter. Does not scavenge.
 local AUTOLOOT = true
 
+-- IF this is true and you ahve more than 20 peacemaking
+local USE_PEACE = true
+
 -- IF this is true and you have more than 20 discordance
 local USE_DISCORD = true
 
@@ -212,13 +215,14 @@ local INSTRUMENTS = {
     0x0EB3, -- LUTE
 }
 
-local songOfHealingReadyMs = (os.clock() * 1000) + 1000
+local peaceReadyMs = (os.clock() * 1000) + 1000
+local discordReadyMs = (os.clock() * 1000) + 1000
 local reEquipShieldReadyMs = (os.clock() * 1000) + 1000
 local reEquipWeaponReadyMs = (os.clock() * 1000) + 1000
+local songOfHealingReadyMs = (os.clock() * 1000) + 1000
 local songOfLightReadyMs = (os.clock() * 1000) + 1000
 local songOfFortuneReadyMs = (os.clock() * 1000) + 1000
 local inflammableReadyMs = (os.clock() * 1000) + 1000
-local discordReadyMs = (os.clock() * 1000) + 1000
 local checkPoison = os.clock() + 1
 local useBandageReadyMs = (os.clock() + 1) * 1000
 local fatAlertReadyMs = (os.clock() * 1000) + 1000
@@ -702,6 +706,36 @@ function UseDiscord(mobileTarget)
 end
 
 
+function UsePeace(mobileTarget)
+    if not USE_PEACE then return end
+    if os.clock() * 1000 < peaceReadyMs then return end
+    if Player.Hits < 40 then return end
+    if Player.IsPoisoned then return end
+    if not mobileTarget then return end
+    if Skills.GetValue("Peacemaking") < 20 then return end
+    if USE_SONG_OF_HEALING and (os.clock() * 1000) > songOfHealingReadyMs then return end
+
+    local instrument
+    for i, graphicId in ipairs(INSTRUMENTS) do
+        instrument = Items.FindByType(graphicId)
+        if instrument ~= nil then break end
+    end
+
+    if not instrument then return end
+
+    Journal.Clear()
+    Spells.Cast('SongOfPeacemaking')
+    Target.WaitForTarget(1000)
+    if Journal.Contains("What instrument shall you play?") then
+        Target.TargetSerial(instrument.Serial)
+        Target.WaitForTarget(1000)
+    end
+    Target.TargetSerial(mobileTarget.Serial)
+    peaceReadyMs = (os.clock() * 1000) + 7000
+    Pause(ACTION_DELAY)
+end
+
+
 function UseInflammablePots(targetMobile)
     if not USE_INFLAMMABLE_POTS then return end
     if Skills.GetValue("Alchemy") < 90 then return end
@@ -944,6 +978,7 @@ while not Player.IsDead and not Player.IsHidden do
     ApplyPoison(mobileTarget)
     UseInflammablePots(mobileTarget)
     UseDiscord(mobileTarget)
+    UsePeace(mobileTarget)
     UseSongOfHealing()
     UseSongOfFortune(mobileTarget)
     UseSongOfLight(mobileTarget)
