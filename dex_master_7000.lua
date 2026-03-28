@@ -75,6 +75,7 @@ local FRIEND_SERIALS = {
     0x00466D56, -- pink floyd
     0x003D131B, -- xufu
     0x00391EC1, -- chaz
+    0x00358EEE, -- brian damage
 }
 
 -- Auto pop pouches
