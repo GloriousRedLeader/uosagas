@@ -76,6 +76,7 @@ local FRIEND_SERIALS = {
     0x003D131B, -- xufu
     0x00391EC1, -- chaz
     0x00358EEE, -- brian damage
+    0x0044459B, -- Thuutumi
 }
 
 -- Auto pop pouches
@@ -808,7 +809,7 @@ function PickupMushrooms(mobileTarget)
     if #shrooms > 0 then
         Player.UseObject(shrooms[1].Serial)
         --Messages.Overhead("OMG ", 37, shrooms[1].Serial)
-        Messages.OverheadMobile(shrooms[1].Serial, 'OMG', 37)
+        --Messages.OverheadMobile(shrooms[1].Serial, 'OMG', 37)
         Pause(ACTION_DELAY)
     end
 end
