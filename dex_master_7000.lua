@@ -547,14 +547,14 @@ function ApplyPoison(mobileTarget)
 
             if string.find(wep.Properties, 'Poison') == nil then
                 --Messages.Overhead("You dont have poison", 44, Player.Serial)
-                Messages.OverheadMobile(Player.Serial, 'You dont have poison', 44)
+                --Messages.OverheadMobile(Player.Serial, 'You dont have poison', 44)
 
                 local poison = Items.FindByType(0x0F0A)
                 if poison ~= nil then
                     local weapon = Items.FindByLayer(1)
                     if weapon ~= nil then
                         --Messages.Overhead("Using Poison", 44, Player.Serial)
-                        Messages.OverheadMobile(Player.Serial, 'Using Poison', 44)
+                        Messages.OverheadMobile(Player.Serial, '+ Applying Poison +', 44)
                         Skills.Use("Poisoning")
                         Target.WaitForTarget(1000)
                         Target.TargetSerial(poison.Serial)
@@ -565,9 +565,6 @@ function ApplyPoison(mobileTarget)
                     end
                 end
             end
-        else
-            --Messages.Overhead('Not applying poison', 34, Player.Serial)
-            Messages.OverheadMobile(Player.Serial, 'Not applying poison', 34)
         end
         checkPoison = os.clock() + 3
     end
@@ -841,14 +838,14 @@ function UseCurePot()
             -- next tick. Gets re-equipped by the ReequipShield()
             -- function (if player is not poisoned)
             --Messages.Overhead("- Shield -", 37, Player.Serial)
-            Messages.OverheadMobile(Player.Serial, '- Shield -', 37)
+            Messages.OverheadMobile(Player.Serial, '- Shield -', 57)
             Player.PickUp(twoHanded.Serial, twoHanded.Amount)
             Player.DropInBackpack()
             Pause(ACTION_DELAY)
         else
             Player.UseObject(pot.Serial)
             --Messages.Overhead("Drinking Cure", 1128, Player.Serial)
-            Messages.OverheadMobile(Player.Serial, 'Drinking Cure', 1128)
+            Messages.OverheadMobile(Player.Serial, '+ Drinking Cure +', 1128)
             Pause(ACTION_DELAY)
         end
     end
@@ -914,7 +911,7 @@ function UseBandage()
                 -- Calculate delay based on Dex
                 local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
 
-                Messages.OverheadMobile(Player.Serial, "+ Healing Self +", 52)
+                Messages.OverheadMobile(Player.Serial, "+ Healing Self +", 67)
                 useBandageReadyMs = (os.clock() * 1000) + selfDelay
 
                 Pause(ACTION_DELAY)
