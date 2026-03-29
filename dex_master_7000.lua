@@ -418,7 +418,7 @@ function GetSortedItemList()
             goto continue
         end
 
-        Messages.Print("Found item " .. item.Name .. " in root container " .. item.RootContainer)
+        --Messages.Print("Found item " .. item.Name .. " in root container " .. item.RootContainer)
 
         table.insert(seriableIdLootPriorityList, item)
         ::continue::
@@ -436,79 +436,6 @@ function GetSortedItemList()
     return seriableIdLootPriorityList
 end
 
-
-
---checkPoison = os.clock() + 1
---if os.clock() > checkPoison then
---checkPoison = os.clock() + 3
-
-function UseBandage()
-    if not USE_BANDAGES then return end
-    --if Cooldown("BandageSelf") then return end
-    if os.clock() * 1000 < useBandageReadyMs then return end
-    if Skills.GetValue("Healing") < 40 then return end
-
-    local bandage = Items.FindByType(0x0E21)
-    if not bandage then return end -- No bandages, no healing
-
-    -- 1. Check Self First
-    if Player.Hits < Player.HitsMax or Player.IsPoisoned then
-        if Player.UseObject(bandage.Serial) then
-            if Target.WaitForTarget(500) then
-                Target.Self()
-                --                Target.TargetSelf()
-                -- Standard self-heal formula based on Dex
-                --local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
-                local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1300
-                Messages.Print("Healing self")
-                --Cooldown("BandageSelf", selfDelay)
-                useBandageReadyMs = (os.clock() * 1000) + selfDelay
-                Pause(ACTION_DELAY)
-                return
-            end
-        else
-            Pause(ACTION_DELAY)
-            Messages.OverheadSerial(Player.Serial, "I no use bandage", 82)
-        end
-        return -- Prioritize self; exit if self-healing is needed/active
-    end
-
-    -- 2. Check Allies if Self is Healthy
-    if BANDAGES_ON_FRIENDS then
-        for _, serial in ipairs(FRIEND_SERIALS) do
-            if serial == Player.Serial then
-                goto continue
-            end
-
-            -- Find the mobile object for this serial
-            local ally = Mobiles.FindBySerial(serial)
-
-            -- Check if ally exists, is alive, in range (2 tiles), and missing > 10% HP
-            if ally and ally.Hits > 0 and ally.Distance <= 1 then
-                local hpPercent = (ally.Hits / ally.HitsMax)
-
-                if hpPercent <= BANDAGE_FRIENDS_MIN_THRESHOLD_HP or ally.IsPoisoned then
-                    if not Cooldown("BandageSelf") then -- Shares global bandage cooldown
-                    if Player.UseObject(bandage.Serial) then
-                        if Target.WaitForTarget(500) then
-                            Target.TargetSerial(ally.Serial)
-                            Player.Say("+ Healing " .. ally.Name .. " +", 67)
-                            --Cooldown("BandageSelf", 5000)
-                            useBandageReadyMs = (os.clock() * 1000) + 5000
-                            Pause(ACTION_DELAY)
-                            return -- Heal one person at a time
-                        end
-                    end
-                end
-            end
-        end
-        ::continue::
-    end
-end
-return false
-end
-
---local mobileTarget = nil
 local mobileTargetLast = nil
 local mobileTargetHitpoints = math.huge
 local checkRetarget = os.clock() + 1
@@ -967,8 +894,76 @@ function ReequipShield()
     reEquipShieldReadyMs = (os.clock() * 1000) + 2000
 end
 
+
+function UseBandage()
+    if not USE_BANDAGES then return end
+
+    -- Check global bandage timer
+    if (os.clock() * 1000) < useBandageReadyMs then return end
+    if Skills.GetValue("Healing") < 40 then return end
+
+    local bandage = Items.FindByType(0x0E21)
+    if not bandage then return end
+
+    -- 1. Check Self First
+    if Player.Hits < Player.HitsMax or Player.IsPoisoned then
+        if Player.UseObject(bandage.Serial) then
+            if Target.WaitForTarget(500) then
+                Target.Self()
+
+                -- Calculate delay based on Dex
+                local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
+
+                Messages.OverheadMobile(Player.Serial, "+ Healing Self +", 52)
+                useBandageReadyMs = (os.clock() * 1000) + selfDelay
+
+                Pause(ACTION_DELAY)
+                return -- Exit function after starting heal
+            end
+        else
+            Pause(ACTION_DELAY)
+            Messages.OverheadMobile(Player.Serial, "I no use bandage", 82)
+        end
+        return
+    end
+
+    -- 2. Check Allies if Self is Healthy
+    if BANDAGES_ON_FRIENDS then
+        for _, serial in ipairs(FRIEND_SERIALS) do
+            if serial == Player.Serial then
+                goto continue
+            end
+
+            local ally = Mobiles.FindBySerial(serial)
+
+            -- Check if ally exists, is alive, in range (1 tile), and needs help
+            if ally and ally.Hits > 0 and ally.Distance <= 1 then
+                local hpPercent = (ally.Hits / ally.HitsMax)
+
+                if hpPercent <= BANDAGE_FRIENDS_MIN_THRESHOLD_HP or ally.IsPoisoned then
+                    -- UPDATED: Use your new variable here instead of Cooldown()
+                    if (os.clock() * 1000) >= useBandageReadyMs then
+                        if Player.UseObject(bandage.Serial) then
+                            if Target.WaitForTarget(500) then
+                                Target.TargetSerial(ally.Serial)
+                                Player.Say("+ Healing " .. ally.Name .. " +", 67)
+
+                                -- Set 5-second delay for healing others
+                                useBandageReadyMs = (os.clock() * 1000) + 5000
+                                Pause(ACTION_DELAY)
+                                return -- Heal one person at a time
+                            end
+                        end
+                    end
+                end
+            end
+            ::continue::
+        end
+    end
+end -- This closes the function correctly
+
 Journal.Clear()
-Messages.Print("Starting Dexmaster 5000")
+Messages.Print("Starting Dexmaster 7000", 52)
 while not Player.IsDead and not Player.IsHidden do
     Pause(1)
     mobileTarget = AutoAttack()
