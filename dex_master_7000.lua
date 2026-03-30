@@ -634,9 +634,8 @@ end
 function UsePeace(mobileTarget)
     if not USE_PEACE then return end
     if os.clock() * 1000 < peaceReadyMs then return end
-    if Player.Hits < 40 then return end
-    if Player.IsPoisoned then return end
     if not mobileTarget then return end
+    if mobileTarget.Distance == null or mobileTarget.Distance > 1 then return end
     if Skills.GetValue("Peacemaking") < 20 then return end
     if USE_SONG_OF_HEALING and (os.clock() * 1000) > songOfHealingReadyMs then return end
 
