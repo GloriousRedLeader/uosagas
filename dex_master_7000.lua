@@ -60,7 +60,8 @@ local BANDAGE_FRIENDS_MIN_THRESHOLD_HP = 0.9
 -- Heal damaged friend by their serial if they are close.
 -- Only applicable when BANDAGES = true
 local FRIEND_SERIALS = {
-    0x0046C66E, -- omg artie
+    0x006C6854, -- omg artie
+    0x0046C66E, -- mr slave
     0x0012705D, -- omg arthur
     0x003A3990, -- omg arturo
     0x0012DDAB,  -- mr karl
@@ -87,9 +88,6 @@ local AUTOLOOT = true
 
 -- IF this is true and you ahve more than 20 peacemaking
 local USE_PEACE = true
-
--- Enemies must be < this amount of tiles from your character
-local PEACE_RANGE = 2
 
 -- IF this is true and you have more than 20 discordance
 local USE_DISCORD = true
@@ -637,8 +635,9 @@ end
 function UsePeace(mobileTarget)
     if not USE_PEACE then return end
     if os.clock() * 1000 < peaceReadyMs then return end
+    if Player.Hits < 40 then return end
+    if Player.IsPoisoned then return end
     if not mobileTarget then return end
-    if mobileTarget.Distance == null or mobileTarget.Distance > PEACE_RANGE then return end
     if Skills.GetValue("Peacemaking") < 20 then return end
     if USE_SONG_OF_HEALING and (os.clock() * 1000) > songOfHealingReadyMs then return end
 

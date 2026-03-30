@@ -15,9 +15,9 @@ if poison ~= nil then
 	local weapon = Items.FindByLayer(1)
 	if weapon ~= nil then
 		Skills.Use("Poisoning")
-		Targeting.WaitForTarget(1000)
-		Targeting.Target(poison.Serial)
-		Targeting.WaitForTarget(1000)
-		Targeting.Target(weapon.Serial)
+		Target.WaitForTarget(1000)
+		Target.TargetSerial(poison.Serial)
+		Target.WaitForTarget(1000)
+		Target.TargetSerial(weapon.Serial)
 	end
 end
