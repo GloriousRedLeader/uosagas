@@ -910,7 +910,7 @@ function UseBandage()
                 Target.Self()
 
                 -- Calculate delay based on Dex
-                local selfDelay = (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100
+                local selfDelay = ((8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100) + 1500
 
                 Messages.OverheadMobile(Player.Serial, "+ Healing Self +", 67)
                 useBandageReadyMs = (os.clock() * 1000) + selfDelay
