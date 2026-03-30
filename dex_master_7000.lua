@@ -88,6 +88,9 @@ local AUTOLOOT = true
 -- IF this is true and you ahve more than 20 peacemaking
 local USE_PEACE = true
 
+-- Enemies must be < this amount of tiles from your character
+local PEACE_RANGE = 2
+
 -- IF this is true and you have more than 20 discordance
 local USE_DISCORD = true
 
@@ -635,7 +638,7 @@ function UsePeace(mobileTarget)
     if not USE_PEACE then return end
     if os.clock() * 1000 < peaceReadyMs then return end
     if not mobileTarget then return end
-    if mobileTarget.Distance == null or mobileTarget.Distance > 1 then return end
+    if mobileTarget.Distance == null or mobileTarget.Distance > PEACE_RANGE then return end
     if Skills.GetValue("Peacemaking") < 20 then return end
     if USE_SONG_OF_HEALING and (os.clock() * 1000) > songOfHealingReadyMs then return end
 
