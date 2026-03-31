@@ -1,21 +1,40 @@
 ------------------------------------------------------------------------------------
--- START OPTIONS for 
+-- START OPTIONS for
 --    Moves all items from container1 to container2.
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
--- Adjust based on latency
+-- Don't screw aroudn with this.
+local VERSION = "1.0"
+
+-- Adjust based on latency
 PAUSE_DELAY_MS = 666
 
 ------------------------------------------------------------------------------------
--- END OPTIONS 
+-- END OPTIONS
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
-Messages.Print("Move all items by type to a new container.", 77)
-Messages.Print("Select source container.", 66)
+-- Define Color Scheme
+local Colors = {
+    Alert   = 33,       -- Red
+    Warning = 48,       -- Orange
+    Caution = 53,       -- Yellow
+    Action  = 67,       -- Green
+    Confirm = 73,       -- Light Green
+    Info    = 84,       -- Light Blue
+    Status  = 93        -- Blue
+}
+
+-- Print Initial Start-Up Greeting
+Messages.Print("___________________________________", Colors.Info)
+Messages.Print("Move Items From Container (v" .. VERSION .. ")", Colors.Info)
+Messages.Print("Moves all items from a container", Colors.Info)
+Messages.Print("__________________________________", Colors.Info)
+
+Messages.Print("Select source container.", Colors.Confirm)
 srcContainerSerial = Targeting.GetNewTarget()
-Messages.Print("Pick a destination container.", 66)
+Messages.Print("Pick a destination container.", Colors.Confirm)
 destContainerSerial = Targeting.GetNewTarget()
 
 

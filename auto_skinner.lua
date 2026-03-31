@@ -4,8 +4,25 @@
 -- By Chaz II (updated from original by JaseOwns)
 -- Slimmed down and made significantly worse by omg arturo
 
-Messages.Overhead("Skinning System Online", 69, Player.Serial)
-Messages.Overhead("Disable auto-open corpses w/ ALT + O", 69, Player.Serial)
+-- Don't screw aroudn with this.
+local VERSION = "1.0"
+
+-- Define Color Scheme
+local Colors = {
+    Alert   = 33,       -- Red
+    Warning = 48,       -- Orange
+    Caution = 53,       -- Yellow
+    Action  = 67,       -- Green
+    Confirm = 73,       -- Light Green
+    Info    = 84,       -- Light Blue
+    Status  = 93        -- Blue
+}
+
+-- Print Initial Start-Up Greeting
+Messages.Print("___________________________________", Colors.Info)
+Messages.Print("Skinning System Online (v" .. VERSION .. ")", Colors.Info)
+Messages.Print("Disable auto-open corpses w/ ALT + O", Colors.Info)
+Messages.Print("__________________________________", Colors.Info)
 
 ---------------------------------------------------------
 --  CONFIG

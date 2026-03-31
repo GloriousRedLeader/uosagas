@@ -1,18 +1,38 @@
 ------------------------------------------------------------------------------------
--- START OPTIONS for 
+-- START OPTIONS for
 -- script that basically presses the craft last button.
 -- Profession depends on CRAFTING_TOOL_GRAPHIC_ID below.
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
+
+-- Don't screw aroudn with this.
+local VERSION = "1.0"
 
 -- Pick the right one. Will search bags for a tool and use it.
 local CRAFTING_TOOL_GRAPHIC_ID = 0x0E9B    -- Alchemy
 --local CRAFTING_TOOL_GRAPHIC_ID = 0x0FBF    -- Scribe
 
 ------------------------------------------------------------------------------------
--- END OPTIONS 
+-- END OPTIONS
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
+
+-- Define Color Scheme
+local Colors = {
+    Alert   = 33,       -- Red
+    Warning = 48,       -- Orange
+    Caution = 53,       -- Yellow
+    Action  = 67,       -- Green
+    Confirm = 73,       -- Light Green
+    Info    = 84,       -- Light Blue
+    Status  = 93        -- Blue
+}
+
+-- Print Initial Start-Up Greeting
+Messages.Print("___________________________________", Colors.Info)
+Messages.Print("Crafting System Online (v" .. VERSION .. ")", Colors.Info)
+Messages.Print("Set the tool graphic id in script", Colors.Info)
+Messages.Print("__________________________________", Colors.Info)
 
 local toolUsed = false  -- Track if tool and pestle has been used already
 
@@ -29,13 +49,13 @@ while true do
             Messages.Print("Mortar and pestle not found!")
         end
     end
-    
+
     -- Press the "Create Last" button to craft the item
     Gumps.PressButton(2653346093, 21)
-    
+
     -- Wait for the gump
     Gumps.WaitForGump(2653346093, 1000)
-    
+
     -- Brief pause to ensure proper timing before proceeding
     Pause(500)
 
@@ -51,15 +71,15 @@ while true do
             Messages.Print("Tool not not found!")
             Messages.Print("Make sure you have the correct CRAFTING_TOOL_GRAPHIC_ID configured in script.")
         end
-        
+
         -- Clear the journal to avoid repeatedly seeing the same message
         Journal.Clear()
-        
+
         -- Restart the loop after handling the worn-out tool
         Messages.Print("Restarting the script...")
-        Pause(1000) 
+        Pause(1000)
     end
 
     Pause(500)
 
-end	
+end

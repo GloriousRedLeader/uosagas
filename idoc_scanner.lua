@@ -3,6 +3,9 @@
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
+-- Don't screw aroudn with this.
+local VERSION = "1.0"
+
 -- Add as needed.
 local SIGN_GRAPHICS = {
     0x0BD1,
@@ -27,9 +30,26 @@ local SIGN_GRAPHICS = {
 }
 
 ------------------------------------------------------------------------------------
--- END OPTIONS 
+-- END OPTIONS
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
+
+-- Define Color Scheme
+local Colors = {
+    Alert   = 33,       -- Red
+    Warning = 48,       -- Orange
+    Caution = 53,       -- Yellow
+    Action  = 67,       -- Green
+    Confirm = 73,       -- Light Green
+    Info    = 84,       -- Light Blue
+    Status  = 93        -- Blue
+}
+
+-- Print Initial Start-Up Greeting
+Messages.Print("___________________________________", Colors.Info)
+Messages.Print("IDOC Scanner (v" .. VERSION .. ")", Colors.Info)
+Messages.Print("Just walk around", Colors.Info)
+Messages.Print("__________________________________", Colors.Info)
 
 while true do
     signs = Items.FindByFilter({ graphics = SIGN_GRAPHICS })

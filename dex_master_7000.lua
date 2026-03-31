@@ -3,6 +3,9 @@
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
+-- Don't screw aroudn with this.
+local VERSION = "1.1"
+
 -- Milliseconds of delay between actions
 local ACTION_DELAY = 550
 
@@ -198,6 +201,17 @@ local MOBS_TO_IGNORE = {
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
+-- Define Color Scheme
+local Colors = {
+    Alert   = 33,       -- Red
+    Warning = 48,       -- Orange
+    Caution = 53,       -- Yellow
+    Action  = 67,       -- Green
+    Confirm = 73,       -- Light Green
+    Info    = 84,       -- Light Blue
+    Status  = 93        -- Blue
+}
+
 local MUSHROOM_GRAPHIC_ID = 0xFEBF
 
 local POISON_IMMUNE_MOBS = {
@@ -217,17 +231,17 @@ local INSTRUMENTS = {
     0x0EB3, -- LUTE
 }
 
-local peaceReadyMs = (os.clock() * 1000) + 1000
-local discordReadyMs = (os.clock() * 1000) + 1000
-local reEquipShieldReadyMs = (os.clock() * 1000) + 1000
-local reEquipWeaponReadyMs = (os.clock() * 1000) + 1000
-local songOfHealingReadyMs = (os.clock() * 1000) + 1000
-local songOfLightReadyMs = (os.clock() * 1000) + 1000
-local songOfFortuneReadyMs = (os.clock() * 1000) + 1000
-local inflammableReadyMs = (os.clock() * 1000) + 1000
-local checkPoison = os.clock() + 1
-local useBandageReadyMs = (os.clock() + 1) * 1000
-local fatAlertReadyMs = (os.clock() * 1000) + 1000
+local peaceReadyMs = (os.time() * 1000) + 1000
+local discordReadyMs = (os.time() * 1000) + 1000
+local reEquipShieldReadyMs = (os.time() * 1000) + 1000
+local reEquipWeaponReadyMs = (os.time() * 1000) + 1000
+local songOfHealingReadyMs = (os.time() * 1000) + 1000
+local songOfLightReadyMs = (os.time() * 1000) + 1000
+local songOfFortuneReadyMs = (os.time() * 1000) + 1000
+local inflammableReadyMs = (os.time() * 1000) + 1000
+local checkPoison = os.time() + 1
+local useBandageReadyMs = (os.time() + 1) * 1000
+local fatAlertReadyMs = (os.time() * 1000) + 1000
 
 Cooldown = {}; do
 local data = {}
@@ -244,7 +258,7 @@ setmetatable(Cooldown, {
             return
         end
 
-        local v = cd.delay - (os.clock() - cd.clock) * 1000
+        local v = cd.delay - (os.time() - cd.clock) * 1000
         if v < 0 then
             data[k] = nil
             v = nil
@@ -257,7 +271,7 @@ setmetatable(Cooldown, {
             return
         end
 
-        local cd = data[k] or { clock = os.clock() }
+        local cd = data[k] or { clock = os.time() }
         cd.delay = type(v) == "number" and v > 0 and v or 0 or 0
         data[k] = cd
     end
@@ -411,11 +425,11 @@ function GetSortedItemList()
         local weight = extract_weight(item)
         if weight ~= nil and weight + Player.Weight > Player.MaxWeight then
             --if not Cooldown("FatAlert") then
-            if os.clock() * 1000 > fatAlertReadyMs then
+            if os.time() * 1000 > fatAlertReadyMs then
                 --Messages.Overhead("too fat, big heavy .. no pick up " .. item.Name .. " (" .. tostring(weight) .. " stones)", 47, Player.Serial)
                 Messages.OverheadMobile(Player.Serial, "too fat, big heavy .. no pick up " .. item.Name .. " (" .. tostring(weight) .. " stones)", 47)
                 --Cooldown("FatAlert", 5000)
-                fatAlertReadyMs = (os.clock() * 1000) + 5000
+                fatAlertReadyMs = (os.time() * 1000) + 5000
             end
             goto continue
         end
@@ -440,7 +454,7 @@ end
 
 local mobileTargetLast = nil
 local mobileTargetHitpoints = math.huge
-local checkRetarget = os.clock() + 1
+local checkRetarget = os.time() + 1
 function AutoAttack()
     mobileTarget = nil
     if not AUTO_ATTACK then return end
@@ -506,17 +520,17 @@ end
 
 mobileTargetHitpoints = math.huge
 if mobileTarget ~= nil then
-    if mobileTargetLast == nil or mobileTarget.Serial ~= mobileTargetLast.Serial or os.clock() > checkRetarget then
+    if mobileTargetLast == nil or mobileTarget.Serial ~= mobileTargetLast.Serial or os.time() > checkRetarget then
         mobileTargetLast = mobileTarget
         Messages.Print("Attacking... " .. mobileTarget.Name, 69, Player.Serial)
         Player.Attack(mobileTarget.Serial)
-        checkRetarget = os.clock() + 3
+        checkRetarget = os.time() + 3
         --return mobileTarget
     end
 end
 return mobileTarget
 
---    if mobileTarget ~= nil and Skills.GetValue("Alchemy") >= 100 and EXPLODE_POTS and os.clock() > checkExplodePot then
+--    if mobileTarget ~= nil and Skills.GetValue("Alchemy") >= 100 and EXPLODE_POTS and os.time() > checkExplodePot then
 --        pots = Items.FindByID(0x0F0D, Player.Backpack.Serial)
 --        pots = Items.FindByType(0x0F0D)
 
@@ -531,7 +545,7 @@ return mobileTarget
 --            Messages.Print("You have no pots")
 --        end
 --
---        checkExplodePot = os.clock() + 5
+--        checkExplodePot = os.time() + 5
 --    end
 end
 
@@ -542,7 +556,7 @@ function ApplyPoison(mobileTarget)
     if containsString(POISON_IMMUNE_MOBS, mobileTarget.Name) then return end
     if mobileTarget.IsPoisoned and SMART_POISONING then return end
 
-    if os.clock() > checkPoison then
+    if os.time() > checkPoison then
         wep = Items.FindByLayer(1)
         if wep ~= nil and wep.Properties ~= nil then
             if WEAPON_GRAPHIC ~= 0 and wep.Graphic ~= WEAPON_GRAPHIC then return end
@@ -568,7 +582,7 @@ function ApplyPoison(mobileTarget)
                 end
             end
         end
-        checkPoison = os.clock() + 3
+        checkPoison = os.time() + 3
     end
 end
 
@@ -603,13 +617,13 @@ end
 function UseDiscord(mobileTarget)
     if not USE_DISCORD then return end
     --if Cooldown("Discord") then return end
-    if os.clock() * 1000 < discordReadyMs then return end
+    if os.time() * 1000 < discordReadyMs then return end
     if Player.Hits < 40 then return end
     if Player.IsPoisoned then return end
     if not mobileTarget then return end
     if Skills.GetValue("Discordance") < 20 then return end
     --if USE_SONG_OF_HEALING and not Cooldown("SongOfHealing") then return end
-    if USE_SONG_OF_HEALING and (os.clock() * 1000) > songOfHealingReadyMs then return end
+    if USE_SONG_OF_HEALING and (os.time() * 1000) > songOfHealingReadyMs then return end
 
     local instrument
     for i, graphicId in ipairs(INSTRUMENTS) do
@@ -627,19 +641,19 @@ function UseDiscord(mobileTarget)
         Target.WaitForTarget(1000)
     end
     Target.TargetSerial(mobileTarget.Serial)
-    discordReadyMs = (os.clock() * 1000) + 7000
+    discordReadyMs = (os.time() * 1000) + 7000
     Pause(ACTION_DELAY)
 end
 
 
 function UsePeace(mobileTarget)
     if not USE_PEACE then return end
-    if os.clock() * 1000 < peaceReadyMs then return end
+    if os.time() * 1000 < peaceReadyMs then return end
     if Player.Hits < 40 then return end
     if Player.IsPoisoned then return end
     if not mobileTarget then return end
     if Skills.GetValue("Peacemaking") < 20 then return end
-    if USE_SONG_OF_HEALING and (os.clock() * 1000) > songOfHealingReadyMs then return end
+    if USE_SONG_OF_HEALING and (os.time() * 1000) > songOfHealingReadyMs then return end
 
     local instrument
     for i, graphicId in ipairs(INSTRUMENTS) do
@@ -657,7 +671,7 @@ function UsePeace(mobileTarget)
         Target.WaitForTarget(1000)
     end
     Target.TargetSerial(mobileTarget.Serial)
-    peaceReadyMs = (os.clock() * 1000) + 7000
+    peaceReadyMs = (os.time() * 1000) + 7000
     Pause(ACTION_DELAY)
 end
 
@@ -666,7 +680,7 @@ function UseInflammablePots(targetMobile)
     if not USE_INFLAMMABLE_POTS then return end
     if Skills.GetValue("Alchemy") < 90 then return end
     --if Cooldown("UseInflammablePot") then return end
-    if (os.clock() * 1000) < inflammableReadyMs then return end
+    if (os.time() * 1000) < inflammableReadyMs then return end
     if not targetMobile then return end
 
     local pot = Items.FindByType(0xFDB3)
@@ -677,7 +691,7 @@ function UseInflammablePots(targetMobile)
     Target.WaitForTarget(1000)
     Target.TargetSerial(targetMobile.Serial)
     --Cooldown("UseInflammablePot", 10000)
-    inflammableReadyMs = (os.clock() * 1000) + 10000
+    inflammableReadyMs = (os.time() * 1000) + 10000
     Pause(ACTION_DELAY)
 end
 
@@ -686,7 +700,7 @@ function UseSongOfHealing()
     if not USE_SONG_OF_HEALING then return end
     if Skills.GetValue("Musicianship") < 50 then return end
     --if Cooldown("SongOfHealing") then return end
-    if (os.clock() * 1000) < songOfHealingReadyMs then return end
+    if (os.time() * 1000) < songOfHealingReadyMs then return end
     if Player.Hits < 50 then return end
 
     local instrument
@@ -709,12 +723,12 @@ function UseSongOfHealing()
 
     if Journal.Contains("Your song creates a healing aura around you") then
         --Cooldown("SongOfHealing", SONG_OF_HEALING_RECAST)
-        songOfHealingReadyMs = (os.clock() * 1000) + SONG_OF_HEALING_RECAST
+        songOfHealingReadyMs = (os.time() * 1000) + SONG_OF_HEALING_RECAST
         -- 3:07
         Player.Say("+ Song of Healing +", 67)
     elseif Journal.Contains("You are already under the effects of this song") then
         --Cooldown("SongOfHealing", 20 * 1000)
-        songOfHealingReadyMs = (os.clock() * 1000) + 20000
+        songOfHealingReadyMs = (os.time() * 1000) + 20000
     end
 end
 
@@ -723,10 +737,10 @@ function UseSongOfFortune(mobileTarget)
     if mobileTarget then return end
     if Skills.GetValue("Musicianship") < 50 then return end
     --if Cooldown("SongOfFortune") then return end
-    if (os.clock() * 1000) < songOfFortuneReadyMs then return end
+    if (os.time() * 1000) < songOfFortuneReadyMs then return end
     if Player.Hits < 50 then return end
     --if USE_SONG_OF_HEALING and not Cooldown("SongOfHealing") then return end
-    if USE_SONG_OF_HEALING and (os.clock() * 1000) > songOfHealingReadyMs then return end
+    if USE_SONG_OF_HEALING and (os.time() * 1000) > songOfHealingReadyMs then return end
 
     local instrument
     for i, graphicId in ipairs(INSTRUMENTS) do
@@ -748,15 +762,15 @@ function UseSongOfFortune(mobileTarget)
 
     if Journal.Contains("You play the song of fortune") then
         --Cooldown("SongOfFortune", SONG_OF_FORTUNE_RECAST)
-        songOfFortuneReadyMs = (os.clock() * 1000) + SONG_OF_FORTUNE_RECAST
+        songOfFortuneReadyMs = (os.time() * 1000) + SONG_OF_FORTUNE_RECAST
         -- 3:07
         Player.Say("+ Song of Fortune +", 67)
     elseif Journal.Contains("You already have a luck bonus") then
         --Cooldown("SongOfFortune", 30 * 1000)
-        songOfFortuneReadyMs = (os.clock() * 1000) + 30000
+        songOfFortuneReadyMs = (os.time() * 1000) + 30000
     else
         --Cooldown("SongOfFortune", 5 * 1000)
-        songOfFortuneReadyMs = (os.clock() * 1000) + 5000
+        songOfFortuneReadyMs = (os.time() * 1000) + 5000
     end
 end
 
@@ -765,10 +779,10 @@ function UseSongOfLight(mobileTarget)
     if mobileTarget then return end
     if Skills.GetValue("Musicianship") < 50 then return end
     --if Cooldown("SongOfLight") then return end
-    if (os.clock() * 1000) < songOfLightReadyMs then return end
+    if (os.time() * 1000) < songOfLightReadyMs then return end
     if Player.Hits < 50 then return end
     --if USE_SONG_OF_HEALING and not Cooldown("SongOfHealing") then return end
-    if USE_SONG_OF_HEALING and (os.clock() * 1000) > songOfHealingReadyMs then return end
+    if USE_SONG_OF_HEALING and (os.time() * 1000) > songOfHealingReadyMs then return end
 
     local instrument
     for i, graphicId in ipairs(INSTRUMENTS) do
@@ -790,16 +804,16 @@ function UseSongOfLight(mobileTarget)
 
     if Journal.Contains("You fail to play the song of light") then
         --Cooldown("SongOfLight", 30 * 1000)
-        songOfLightReadyMs = (os.clock() * 1000) + 30000
+        songOfLightReadyMs = (os.time() * 1000) + 30000
         --if Journal.Contains("You already have night sight") then
         --Cooldown("SongOfLight", 10 * 1000)
     elseif Journal.Contains("You successfully play the song of light") then
         --Cooldown("SongOfLight", SONG_OF_LIGHT_RECAST)
-        songOfLightReadyMs = (os.clock() * 1000) + SONG_OF_LIGHT_RECAST
+        songOfLightReadyMs = (os.time() * 1000) + SONG_OF_LIGHT_RECAST
         Player.Say("+ Song of Light +", 67)
     else
         --Cooldown("SongOfLight", 5 * 1000)
-        songOfLightReadyMs = (os.clock() * 1000) + 5000
+        songOfLightReadyMs = (os.time() * 1000) + 5000
     end
 end
 
@@ -870,12 +884,12 @@ function ReequipWeapon()
     if not oneHandedWeapon then return end
     if Items.FindByLayer(1) then return end
     --if Cooldown("ReequipWeapon") then return end
-    if (os.clock() * 1000) < reEquipWeaponReadyMs then return end
+    if (os.time() * 1000) < reEquipWeaponReadyMs then return end
 
     Player.Equip(oneHandedWeapon.Serial)
     Pause(ACTION_DELAY)
     --Cooldown("ReequipWeapon", 1000)
-    reEquipWeaponReadyMs = (os.clock() * 1000) + 1000
+    reEquipWeaponReadyMs = (os.time() * 1000) + 1000
 end
 
 
@@ -884,13 +898,13 @@ function ReequipShield()
     if Items.FindByLayer(2) then return end
     if Player.IsPoisoned then return end
     --if Cooldown("ReequipShield") then return end
-    if (os.clock() * 1000) < reEquipShieldReadyMs then return end
+    if (os.time() * 1000) < reEquipShieldReadyMs then return end
     if not USE_CURE_POTS then return end
 
     Player.Equip(twoHandedWeapon.Serial)
     Pause(ACTION_DELAY)
     --Cooldown("ReequipShield", 2000)
-    reEquipShieldReadyMs = (os.clock() * 1000) + 2000
+    reEquipShieldReadyMs = (os.time() * 1000) + 2000
 end
 
 
@@ -898,7 +912,7 @@ function UseBandage()
     if not USE_BANDAGES then return end
 
     -- Check global bandage timer
-    if (os.clock() * 1000) < useBandageReadyMs then return end
+    if (os.time() * 1000) < useBandageReadyMs then return end
     if Skills.GetValue("Healing") < 40 then return end
 
     local bandage = Items.FindByType(0x0E21)
@@ -914,7 +928,7 @@ function UseBandage()
                 local selfDelay = ((8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100) + 1500
 
                 Messages.OverheadMobile(Player.Serial, "+ Healing Self +", 67)
-                useBandageReadyMs = (os.clock() * 1000) + selfDelay
+                useBandageReadyMs = (os.time() * 1000) + selfDelay
 
                 Pause(ACTION_DELAY)
                 return -- Exit function after starting heal
@@ -941,14 +955,14 @@ function UseBandage()
 
                 if hpPercent <= BANDAGE_FRIENDS_MIN_THRESHOLD_HP or ally.IsPoisoned then
                     -- UPDATED: Use your new variable here instead of Cooldown()
-                    if (os.clock() * 1000) >= useBandageReadyMs then
+                    if (os.time() * 1000) >= useBandageReadyMs then
                         if Player.UseObject(bandage.Serial) then
                             if Target.WaitForTarget(500) then
                                 Target.TargetSerial(ally.Serial)
                                 Player.Say("+ Healing " .. ally.Name .. " +", 67)
 
                                 -- Set 5-second delay for healing others
-                                useBandageReadyMs = (os.clock() * 1000) + 5000
+                                useBandageReadyMs = (os.time() * 1000) + 5000
                                 Pause(ACTION_DELAY)
                                 return -- Heal one person at a time
                             end
@@ -962,7 +976,14 @@ function UseBandage()
 end -- This closes the function correctly
 
 Journal.Clear()
-Messages.Print("Starting Dexmaster 7000", 52)
+
+-- Print Initial Start-Up Greeting
+Messages.Print("___________________________________", Colors.Info)
+Messages.Print("DexMaster 7000 Online (v" .. VERSION .. ")", Colors.Info)
+Messages.Print("Be sure to configure options in script", Colors.Info)
+Messages.Print("__________________________________", Colors.Info)
+
+
 while not Player.IsDead and not Player.IsHidden do
     Pause(1)
     mobileTarget = AutoAttack()

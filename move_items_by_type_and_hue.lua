@@ -1,26 +1,44 @@
 ------------------------------------------------------------------------------------
--- START OPTIONS for 
--- a script that moves all items by type and color from one container 
--- to another. This uses graphic id and and also hue. 
--- 
---  Example: You have 5 trapped pouches (red) and 5 regular pouches (brown). Target a 
+-- START OPTIONS for
+-- a script that moves all items by type and color from one container
+-- to another. This uses graphic id and and also hue.
+--
+--  Example: You have 5 trapped pouches (red) and 5 regular pouches (brown). Target a
 --  trapped pouch and it will only move the red ones.
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
+-- Don't screw aroudn with this.
+local VERSION = "1.0"
 
 -- Adjust based on latency
 PAUSE_DELAY_MS = 666
 
 ------------------------------------------------------------------------------------
--- END OPTIONS 
+-- END OPTIONS
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
-Messages.Print("Move all items by type and color to a new container.", 77)
-Messages.Print("Select an item.", 66)
+-- Define Color Scheme
+local Colors = {
+    Alert   = 33,       -- Red
+    Warning = 48,       -- Orange
+    Caution = 53,       -- Yellow
+    Action  = 67,       -- Green
+    Confirm = 73,       -- Light Green
+    Info    = 84,       -- Light Blue
+    Status  = 93        -- Blue
+}
+
+-- Print Initial Start-Up Greeting
+Messages.Print("___________________________________", Colors.Info)
+Messages.Print("Move Items By Type and Hue (v" .. VERSION .. ")", Colors.Info)
+Messages.Print("From one container to another", Colors.Info)
+Messages.Print("__________________________________", Colors.Info)
+
+Messages.Print("Select an item.", Colors.Confirm)
 itemSerial = Targeting.GetNewTarget()
-Messages.Print("Pick a destination container.", 66)
+Messages.Print("Pick a destination container.", Colors.Confirm)
 destContainerSerial = Targeting.GetNewTarget()
 
 item = Items.FindBySerial(itemSerial)
