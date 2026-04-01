@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------------
--- START OPTIONS for script that auto lumberjacks
+-- START OPTIONS for script that auto mines
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
@@ -9,9 +9,14 @@ local VERSION = "1.0"
 -- Probably don't mess with this either
 local ACTION_DELAY = 750
 
-local AXE_GRAPHIC_ID = 0x0F43
+local PICKAXE_GRAPHIC_ID = 0x0E86
 
-local LOG_GRAPHIC_ID = 0x1BDD
+-- Enable to auto smelt ore when near a forge
+local SMELT_ORE = false
+
+local SMITHY_TOOL_GRAPHIC_ID = 0x13E3
+
+local ORES = { 6585, 6584, 6586, 6585 }
 
 ------------------------------------------------------------------------------------
 -- END OPTIONS
@@ -31,17 +36,16 @@ local Colors = {
 
 -- Print Initial Start-Up Greeting
 Messages.Print("___________________________________", Colors.Info)
-Messages.Print("Lumberjacking System Online (v" .. VERSION .. ")", Colors.Info)
-Messages.Print("Equips axe and double clicks it", Colors.Info)
+Messages.Print("Mining System Online (v" .. VERSION .. ")", Colors.Info)
+Messages.Print("Equips pickaxe and double clicks it", Colors.Info)
 Messages.Print("__________________________________", Colors.Info)
 
 while true do
 
-    local tool = Items.FindByLayer(2)
-
+    local tool = Items.FindByLayer(1)
     if tool == nil then
         Messages.Print("No tool in hand", Colors.Warning)
-        tool = Items.FindByType(AXE_GRAPHIC_ID)
+        tool = Items.FindByType(PICKAXE_GRAPHIC_ID)
         if tool == nil then
             Messages.Print("No tool found in backpacking, halting", Colors.Alert)
             return
@@ -52,20 +56,30 @@ while true do
         Pause(ACTION_DELAY)
     end
 
+
+
+    local smithyTool = Items.FindByType(SMITHY_TOOL_GRAPHIC_ID)
+    if SMELT_ORE and smithyTool ~= nil then
+        Player.UseObject(smithyTool.Serial)
+    end
+
     Journal.Clear()
     Player.UseObject(tool.Serial)
-    logs = Items.FindByType(LOG_GRAPHIC_ID)
-    if logs ~= nil then
-        Messages.Print(logs.Name)
-        Target.WaitForTarget(750)
-        Target.TargetSerial(logs.Serial)
-    else
-        while Target.IsTargeting() do
-            Pause(250)
-        end
+
+
+
+
+
+    while Target.IsTargeting() do
+        Pause(250)
     end
+
     Pause(ACTION_DELAY)
-    if Journal.Contains("There's not enough wood") then
-        Messages.OverheadMobile(Player.Serial, "- no more wood -", Colors.Caution)
+    if Journal.Contains("There is no metal here to mine") then
+        Messages.OverheadMobile(Player.Serial, "- no more ore -", Colors.Caution)
     end
+    Journal.Clear()
+    --    if Journal.Contains("There's not enough wood") then
+    --        Messages.OverheadMobile(Player.Serial, "- no more wood -", Colors.Caution)
+    --    end
 end
