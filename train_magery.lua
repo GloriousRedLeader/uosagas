@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------------------
--- START OPTIONS for script that trains magery. This one is nice because it will 
+-- START OPTIONS for script that trains magery. This one is nice because it will
 -- use healing skill if you have it to save time and mana. Original author is aKKa
 -- THis particular script also lets you train Eval int separately and detect hidden
--- I have no  idea why I put that in there. Will attempt to use healing if  you 
--- have bandages and healing > 30. 
+-- I have no  idea why I put that in there. Will attempt to use healing if  you
+-- have bandages and healing > 30.
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ local EVAL_INT = false
 local EVAL_INT_TARGET_SERIAL = 0x0046F6AD -- A bull somewhere near Moonvale
 
 local magerySpells = {
---    { min = 70, spell = 'FlameStrike' },
+    --    { min = 70, spell = 'FlameStrike' },
     { min = 90, spell = 'Earthquake' },
     { min = 70, spell = 'ManaVampire' },
     { min = 50, spell = 'ManaDrain' },
@@ -26,7 +26,7 @@ local magerySpells = {
 }
 
 ------------------------------------------------------------------------------------
--- END OPTIONS 
+-- END OPTIONS
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
@@ -38,38 +38,38 @@ local meditationMessages = {
 }
 
 Cooldown = {}; do
-    local data = {}
-    setmetatable(Cooldown, {
-        __call = function(t, k, v)
-            if not v then
-                return t[k]
-            end
-            t[k] = v
-        end,
-        __index = function(_, k)
-            local cd = data[k]
-            if not cd then
-                return
-            end
-
-            local v = cd.delay - (os.clock() - cd.clock) * 1000
-            if v < 0 then
-                data[k] = nil
-                v = nil
-            end
-            return v
-        end,
-        __newindex = function(_, k, v)
-            if not v then
-                data[k] = nil
-                return
-            end
-
-            local cd = data[k] or { clock = os.clock() }
-            cd.delay = type(v) == "number" and v > 0 and v or 0 or 0
-            data[k] = cd
+local data = {}
+setmetatable(Cooldown, {
+    __call = function(t, k, v)
+        if not v then
+            return t[k]
         end
-    })
+        t[k] = v
+    end,
+    __index = function(_, k)
+        local cd = data[k]
+        if not cd then
+            return
+        end
+
+        local v = cd.delay - (os.time() - cd.clock) * 1000
+        if v < 0 then
+            data[k] = nil
+            v = nil
+        end
+        return v
+    end,
+    __newindex = function(_, k, v)
+        if not v then
+            data[k] = nil
+            return
+        end
+
+        local cd = data[k] or { clock = os.time() }
+        cd.delay = type(v) == "number" and v > 0 and v or 0 or 0
+        data[k] = cd
+    end
+})
 end
 
 -- Manages the meditation process to restore mana to full.
@@ -106,22 +106,24 @@ end
 -- It will meditate if mana is low, then cast the appropriate healing spell on the player.
 function HealSelf()
     while Player.Hits < Player.HitsMax do
-    	local bandage = Items.FindByType(0x0E21)        
+        local bandage = Items.FindByType(0x0E21)
+
         if Skills.GetValue("Healing") > 30 and bandage then
-			if  not Cooldown("BandageSelf") then
-				if Player.UseObject(bandage.Serial) then
-					if Targeting.WaitForTarget(500) then
-						Targeting.TargetSelf()
-						Cooldown("BandageSelf", (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100)
-					end
-				end        
-			end
+            if  not Cooldown("BandageSelf") then
+                if Player.UseObject(bandage.Serial) then
+                    if Target.WaitForTarget(500) then
+                        Target.TargetSelf()
+                        Cooldown("BandageSelf", (8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100)
+                    end
+                end
+
+            end
             Pause(800)
         else
-           Spells.Cast(GetHealingSpellString())
-            if Targeting.WaitForTarget(5000) then
-               Targeting.Target(Player.Serial)
-               Pause(800)
+            Spells.Cast(GetHealingSpellString())
+            if Target.WaitForTarget(5000) then
+                Target.TargetSerial(Player.Serial)
+                Pause(800)
             end
         end
     end
@@ -146,22 +148,22 @@ while Skills.GetValue('Magery') or Skills.GetValue('Resist') < 100 do
             end
         end
 
-        if Targeting.WaitForTarget(5000) then
-            Targeting.Target(Player.Serial)
+        if Target.WaitForTarget(5000) then
+            Target.TargetSerial(Player.Serial)
             Pause(800)
 
             if DETECT_HIDDEN then
                 Skills.Use('Detecting Hidden')
-                Targeting.WaitForTarget(1000)
-                Targeting.TargetSelf()
+                Target.WaitForTarget(1000)
+                Target.TargetSelf()
                 Pause(1500)
             end
 
             if EVAL_INT and EVAL_INT_TARGET_SERIAL then
                 for i = 1, 10 do
-                    Skills.Use("Evaluating Intelligence")   
-                    Targeting.WaitForTarget(1000)
-                    Targeting.Target(EVAL_INT_TARGET_SERIAL)
+                    Skills.Use("Evaluating Intelligence")
+                    Target.WaitForTarget(1000)
+                    Target.TargetSerial(EVAL_INT_TARGET_SERIAL)
                     Pause(1000)
                 end
             end
