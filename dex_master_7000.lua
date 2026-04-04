@@ -81,6 +81,7 @@ local FRIEND_SERIALS = {
     0x00391EC1, -- chaz
     0x00358EEE, -- brian damage
     0x0044459B, -- Thuutumi
+    0x003306A5, -- Dardes Jum Zir
 }
 
 -- Auto pop pouches
