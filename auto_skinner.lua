@@ -1,3 +1,8 @@
+------------------------------------------------------------------------------------
+-- START OPTIONS for script that auto mines
+-- by OMG Arturo
+------------------------------------------------------------------------------------
+
 -- Open Corpses, Skin, Loot Rare Leather, Cut Once
 -- UO Sagas
 -- Improved Version: 2025-12-10
@@ -5,7 +10,31 @@
 -- Slimmed down and made significantly worse by omg arturo
 
 -- Don't screw aroudn with this.
-local VERSION = "1.0"
+local VERSION = "1.1"
+
+local CORPSE_GRAPHIC = 0x2006
+local SKINNING_KNIFE  = 0xFEA9
+local ACTION_DELAY_MS = 800
+
+
+-- Only keep these leathers, rest gets dropped on groud
+local KEEP_HUES = {
+    --0x0000, -- Regular
+    --0x0973, -- Dull Copper
+    --0x0966, -- Shadow Iron
+    --0x096D, -- Copper
+    --0x0972, -- Bronze
+    --0x08A5, -- Gold
+    --0x0979, -- Agapite
+    --0x089F, -- Verite
+    0x08AB, -- Valorite
+}
+
+------------------------------------------------------------------------------------
+-- END OPTIONS
+-- by OMG Arturo
+------------------------------------------------------------------------------------
+
 
 -- Define Color Scheme
 local Colors = {
@@ -25,16 +54,18 @@ Messages.Print("Disable auto-open corpses w/ ALT + O", Colors.Info)
 Messages.Print("__________________________________", Colors.Info)
 
 ---------------------------------------------------------
---  CONFIG
----------------------------------------------------------
-
-local CORPSE_GRAPHIC = 0x2006
-local SKINNING_KNIFE  = 0xFEA9
-local ACTION_DELAY_MS = 800
-
----------------------------------------------------------
 --  HELPERS
 ---------------------------------------------------------
+
+-- Helepr
+function tableContains(tbl, val)
+    for _, value in ipairs(tbl) do
+        if value == val then
+            return true
+        end
+    end
+    return false
+end
 
 function GetSkinningKnife()
     for i, item in ipairs(Items.FindByFilter({ graphics = {SKINNING_KNIFE} })) do
@@ -90,11 +121,12 @@ while true do
                 Player.UseObject(corpse.Serial)
                 Pause(ACTION_DELAY_MS)
 
-                local hides = Items.FindByFilter({ graphics = { 0x1079 } })
+                local hides = Items.FindByFilter({ graphics = { 0x1079 }, onground = false })
                 for _, hide in ipairs(hides) do
-                    if hide.RootContainer == Player.Serial then
+                    if hide.RootContainer == Player.Serial and not tableContains(KEEP_HUES, hide.Hue) then
                         Player.PickUp(hide.Serial, hide.Amount)
-                        Player.DropInContainer(corpse.Serial)
+                        --Player.DropInContainer(corpse.Serial)
+                        Player.DropOnGround()
                         Pause(ACTION_DELAY_MS)
                     end
                 end
