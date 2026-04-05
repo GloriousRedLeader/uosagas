@@ -96,6 +96,10 @@ Player.UseObject(tool.Serial)
 Messages.Print("Select a node", Colors.Confirm)
 Target.WaitForTarget(3000)
 
+while Target.IsTargeting() do
+    Pause(250)
+end
+
 while true do
     Pause(ACTION_DELAY)
     if Journal.Contains("There is no metal here to mine") or Journal.Contains("Target cannot be seen") then
