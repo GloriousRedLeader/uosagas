@@ -10,11 +10,12 @@
 -- Slimmed down and made significantly worse by omg arturo
 
 -- Don't screw aroudn with this.
-local VERSION = "1.1"
+local VERSION = "1.2"
 
 local CORPSE_GRAPHIC = 0x2006
 local SKINNING_KNIFE  = 0xFEA9
-local ACTION_DELAY_MS = 800
+local SCISSOR_GRAPHIC = 0x0F9F
+local ACTION_DELAY = 800
 
 
 -- Only keep these leathers, rest gets dropped on groud
@@ -26,7 +27,7 @@ local KEEP_HUES = {
     --0x0972, -- Bronze
     --0x08A5, -- Gold
     --0x0979, -- Agapite
-    --0x089F, -- Verite
+    0x089F, -- Verite
     0x08AB, -- Valorite
 }
 
@@ -100,6 +101,7 @@ local corpseFilter = {
 
 while true do
 
+    local scissors = Items.FindByType(SCISSOR_GRAPHIC)
     local skinningKnife = GetSkinningKnife()
     if skinningKnife == nil then
         Messages.Overhead("No skinningKnife!", 34, Player.Serial)
@@ -114,12 +116,12 @@ while true do
                 Player.UseObject(skinningKnife.Serial)
                 Target.WaitForTarget(1000, false)
                 Target.TargetSerial(corpse.Serial)
-                Pause(ACTION_DELAY_MS)
+                Pause(ACTION_DELAY)
 
 
                 -- Open the corpse
                 Player.UseObject(corpse.Serial)
-                Pause(ACTION_DELAY_MS)
+                Pause(ACTION_DELAY)
 
                 local hides = Items.FindByFilter({ graphics = { 0x1079 }, onground = false })
                 for _, hide in ipairs(hides) do
@@ -127,7 +129,12 @@ while true do
                         Player.PickUp(hide.Serial, hide.Amount)
                         --Player.DropInContainer(corpse.Serial)
                         Player.DropOnGround()
-                        Pause(ACTION_DELAY_MS)
+                        Pause(ACTION_DELAY)
+                    elseif hide.RootContainer == Player.Serial and scissors ~= nil then
+                        Player.UseObject(scissors.Serial)
+                        Target.WaitForTarget(3000)
+                        Target.TargetSerial(hide.Serial)
+                        Pause(ACTION_DELAY)
                     end
                 end
 
