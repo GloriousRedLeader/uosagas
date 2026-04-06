@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw around with this.
-local VERSION = "1.2"
+local VERSION = "1.3"
 
 -- Probably don't mess with this either
 local ACTION_DELAY = 750
@@ -25,6 +25,9 @@ local KEEP_HUES = {
     --0x089F, -- Verite
     0x08AB, -- Valorite
 }
+
+-- Use /say to report drops / keeps
+local NOISY_MODE = true
 
 ------------------------------------------------------------------------------------
 -- END OPTIONS
@@ -110,15 +113,19 @@ while true do
     Player.UseObject(tool.Serial)
     Target.WaitForTarget(3000)
     Target.Last()
+    Pause(3000)
 end
 
 for _, log in ipairs(Items.FindByFilter({ onground = false, graphics = LOG_GRAPHIC_ID})) do
     if log and log.Container == Player.Backpack.Serial and not tableContains(KEEP_HUES, log.Hue) then
+        if NOISY_MODE then Player.Say("- " .. log.Name .. " -", Colors.Warning) end
         Player.PickUp(log.Serial, log.Amount)
         Player.DropOnGround()
         Pause(ACTION_DELAY)
     elseif log and log.Container == Player.Backpack.Serial then
+        if NOISY_MODE then Player.Say("+ " .. log.Name .. " +", Colors.Confirm) end
         Player.UseObject(tool.Serial)
+        Target.WaitForTarget(3000)
         Target.TargetSerial(log.Serial)
         Pause(ACTION_DELAY)
     end

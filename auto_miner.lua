@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw around with this.
-local VERSION = "1.2"
+local VERSION = "1.3"
 
 -- Probably don't mess with this either
 local ACTION_DELAY = 750
@@ -34,6 +34,9 @@ local KEEP_HUES = {
 }
 
 local ORE_GRAPHICS = { 0x19B9, 0x19B8, 0x19BA, 0x19B7 }
+
+-- Use /say to report drops / keeps
+local NOISY_MODE = true
 
 ------------------------------------------------------------------------------------
 -- END OPTIONS
@@ -128,6 +131,7 @@ end
 for index, oreGraphic in ipairs(ORE_GRAPHICS) do
     for _, ore in ipairs(Items.FindByFilter({ onground = false, graphics = oreGraphic})) do
         if ore and ore.Container == Player.Backpack.Serial and not tableContains(KEEP_HUES, ore.Hue) then
+            if NOISY_MODE then Player.Say("- " .. ore.Name .. " -", Colors.Warning) end
             Player.PickUp(ore.Serial, ore.Amount)
             Player.DropOnGround()
             Pause(ACTION_DELAY)
