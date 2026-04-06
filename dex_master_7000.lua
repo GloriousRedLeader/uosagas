@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw aroudn with this.
-local VERSION = "1.1"
+local VERSION = "1.2"
 
 -- Milliseconds of delay between actions
 local ACTION_DELAY = 550
@@ -480,7 +480,7 @@ function AutoAttack()
             goto continue
         end
 
-        if autoAttackRed == false then
+        if AUTO_ATTACK_REDS == false then
             if mobile.NotorietyFlag == "Murderer" then
                 goto continue
             end

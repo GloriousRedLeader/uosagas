@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw around with this.
-local VERSION = "1.3"
+local VERSION = "1.4"
 
 -- Probably don't mess with this either
 local ACTION_DELAY = 750
@@ -113,7 +113,7 @@ while true do
     Player.UseObject(tool.Serial)
     Target.WaitForTarget(3000)
     Target.Last()
-    Pause(3000)
+    Pause(ACTION_DELAY)
 end
 
 for _, log in ipairs(Items.FindByFilter({ onground = false, graphics = LOG_GRAPHIC_ID})) do
