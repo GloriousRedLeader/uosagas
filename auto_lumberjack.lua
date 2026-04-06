@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw around with this.
-local VERSION = "1.1"
+local VERSION = "1.2"
 
 -- Probably don't mess with this either
 local ACTION_DELAY = 750
@@ -59,9 +59,11 @@ function tableContains(tbl, val)
 end
 
 -- Finds tool needed to gather resources
-function GetTool()
-    local tool = Items.FindByLayer(2)
-    if tool == nil then
+function GetTool(layer)
+    local tool = Items.FindByLayer(layer)
+    if tool == nil or tool.Graphic ~= TOOL_GRAPHIC_ID then
+        Player.ClearHands("both")
+        Pause(ACTION_DELAY)
         Messages.Print("No tool in hand", Colors.Warning)
         tool = Items.FindByType(TOOL_GRAPHIC_ID)
         if tool == nil then
@@ -76,7 +78,7 @@ function GetTool()
 end
 
 
-tool = GetTool()
+tool = GetTool(2)
 if not tool then
     Messages.Print("Tool not found", Colors.Warning)
     return
@@ -88,18 +90,18 @@ Messages.Print("Select a node", Colors.Confirm)
 Target.WaitForTarget(3000)
 
 while Target.IsTargeting() do
-   Pause(250) 
+    Pause(250)
 end
 
 while true do
     Pause(ACTION_DELAY)
-    if Journal.Contains("There's not enough wood") then
-        Messages.Print("No more wood", Colors.Caution)
+    if Journal.Contains("There's not enough wood") or Journal.Contains("You can't use an axe on that") then
+        Messages.Print("Done", Colors.Caution)
         break
     end
     Journal.Clear()
 
-    tool = GetTool()
+    tool = GetTool(2)
     if not tool then
         Messages.Print("Tool not found", Colors.Warning)
         break
@@ -110,13 +112,12 @@ while true do
     Target.Last()
 end
 
-
 for _, log in ipairs(Items.FindByFilter({ onground = false, graphics = LOG_GRAPHIC_ID})) do
     if log and log.Container == Player.Backpack.Serial and not tableContains(KEEP_HUES, log.Hue) then
         Player.PickUp(log.Serial, log.Amount)
         Player.DropOnGround()
         Pause(ACTION_DELAY)
-    else
+    elseif log and log.Container == Player.Backpack.Serial then
         Player.UseObject(tool.Serial)
         Target.TargetSerial(log.Serial)
         Pause(ACTION_DELAY)

@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw around with this.
-local VERSION = "1.1"
+local VERSION = "1.2"
 
 -- Probably don't mess with this either
 local ACTION_DELAY = 750
@@ -69,9 +69,11 @@ function tableContains(tbl, val)
 end
 
 -- Finds tool needed to gather resources
-function GetTool()
-    local tool = Items.FindByLayer(1)
-    if tool == nil then
+function GetTool(layer)
+    local tool = Items.FindByLayer(layer)
+    if tool == nil or tool.Graphic ~= TOOL_GRAPHIC_ID then
+        Player.ClearHands("both")
+        Pause(ACTION_DELAY)
         Messages.Print("No tool in hand", Colors.Warning)
         tool = Items.FindByType(TOOL_GRAPHIC_ID)
         if tool == nil then
@@ -85,7 +87,7 @@ function GetTool()
     return tool
 end
 
-tool = GetTool()
+tool = GetTool(1)
 if not tool then
     Messages.Print("Tool not found", Colors.Warning)
     return
@@ -103,7 +105,7 @@ end
 while true do
     Pause(ACTION_DELAY)
     if Journal.Contains("There is no metal here to mine") or Journal.Contains("Target cannot be seen") then
-        Messages.Print("No more ore", Colors.Caution)
+        Messages.Print("Done", Colors.Caution)
         break
     end
     Journal.Clear()
@@ -112,7 +114,7 @@ while true do
     --if SMELT_ORE and smithyTool ~= nil then
     --    Player.UseObject(smithyTool.Serial)
     --end
-    tool = GetTool()
+    tool = GetTool(1)
     if not tool then
         Messages.Print("Tool not found", Colors.Warning)
         break
