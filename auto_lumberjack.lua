@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw around with this.
-local VERSION = "1.4"
+local VERSION = "1.5"
 
 -- Probably don't mess with this either
 local ACTION_DELAY = 750
@@ -26,7 +26,8 @@ local KEEP_HUES = {
     0x08AB, -- Valorite
 }
 
--- Use /say to report drops / keeps
+-- Use /say when dropping or keeping a resource.
+-- Otherwise it will print privately over your head.
 local NOISY_MODE = true
 
 ------------------------------------------------------------------------------------
@@ -118,12 +119,20 @@ end
 
 for _, log in ipairs(Items.FindByFilter({ onground = false, graphics = LOG_GRAPHIC_ID})) do
     if log and log.Container == Player.Backpack.Serial and not tableContains(KEEP_HUES, log.Hue) then
-        if NOISY_MODE then Player.Say("- " .. log.Name .. " -", Colors.Warning) end
+        if NOISY_MODE then
+            Player.Say("- " .. log.Name .. " -", Colors.Warning)
+        else
+            Messages.OverheadMobile(Player.Serial, "- " .. log.Name .. " -", Colors.Warning)
+        end
         Player.PickUp(log.Serial, log.Amount)
         Player.DropOnGround()
         Pause(ACTION_DELAY)
     elseif log and log.Container == Player.Backpack.Serial then
-        if NOISY_MODE then Player.Say("+ " .. log.Name .. " +", Colors.Confirm) end
+        if NOISY_MODE then
+            Player.Say("+ " .. log.Name .. " +", Colors.Confirm)
+        else
+            Messagse.OverheadMobile(Player.Serial, "+ " .. log.Name .. " +", Colors.Confirm)
+        end
         Player.UseObject(tool.Serial)
         Target.WaitForTarget(3000)
         Target.TargetSerial(log.Serial)

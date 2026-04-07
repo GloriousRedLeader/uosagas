@@ -8,26 +8,27 @@
 -- By Chaz II (updated from original by JaseOwns)
 -- Slimmed down and made significantly worse by omg arturo
 -- Don't screw aroudn with this.
-local VERSION = "1.3"
+local VERSION = "1.4"
 
 local CORPSE_GRAPHIC = 0x2006
 local SKINNING_KNIFE = 0xFEA9
 local SCISSOR_GRAPHIC = 0x0F9F
 local ACTION_DELAY = 800
 
--- Use /say to report drops / keeps
+-- Use /say when dropping or keeping a resource.
+-- Otherwise it will print privately over your head.
 local NOISY_MODE = true
 
 -- Only keep these leathers, rest gets dropped on groud
 local KEEP_HUES = { -- 0x0000, -- Regular
-0x0973, -- Dull Copper
--- 0x0966, -- Shadow Iron
--- 0x096D, -- Copper
--- 0x0972, -- Bronze
--- 0x08A5, -- Gold
--- 0x0979, -- Agapite
-0x089F, -- Verite
-0x08AB -- Valorite
+    0x0973, -- Dull Copper
+    -- 0x0966, -- Shadow Iron
+    -- 0x096D, -- Copper
+    -- 0x0972, -- Bronze
+    -- 0x08A5, -- Gold
+    -- 0x0979, -- Agapite
+    0x089F, -- Verite
+    0x08AB -- Valorite
 }
 
 ------------------------------------------------------------------------------------
@@ -128,12 +129,20 @@ while true do
                 })
                 for _, hide in ipairs(hides) do
                     if hide.RootContainer == Player.Serial and not tableContains(KEEP_HUES, hide.Hue) then
-                        if NOISY_MODE then Player.Say("- " .. hide.Name .. " -", Colors.Warning) end
+                        if NOISY_MODE then
+                            Player.Say("- " .. hide.Name .. " -", Colors.Warning)
+                        else
+                            Messages.OverheadMobile(Player.Serial, "- " .. hide.Name .. " -", Colors.Warning)
+                        end
                         Player.PickUp(hide.Serial, hide.Amount)
                         Player.DropOnGround()
                         Pause(ACTION_DELAY)
                     elseif hide.RootContainer == Player.Serial and scissors ~= nil then
-                        if NOISY_MODE then Player.Say("+ " .. hide.Name .. " +", Colors.Confirm) end
+                        if NOISY_MODE then
+                            Player.Say("+ " .. hide.Name .. " +", Colors.Confirm)
+                        else
+                            Messages.OverheadMobile(Player.Serial, "+ " .. hide.Name .. " +", Colors.Confirm)
+                        end
                         Player.UseObject(scissors.Serial)
                         Target.WaitForTarget(3000)
                         Target.TargetSerial(hide.Serial)

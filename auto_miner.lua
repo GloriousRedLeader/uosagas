@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw around with this.
-local VERSION = "1.4"
+local VERSION = "1.5"
 
 -- Probably don't mess with this either
 local ACTION_DELAY = 750
@@ -35,7 +35,8 @@ local KEEP_HUES = {
 
 local ORE_GRAPHICS = { 0x19B9, 0x19B8, 0x19BA, 0x19B7 }
 
--- Use /say to report drops / keeps
+-- Use /say when dropping or keeping a resource.
+-- Otherwise it will print privately over your head.
 local NOISY_MODE = true
 
 ------------------------------------------------------------------------------------
@@ -107,7 +108,7 @@ end
 
 while true do
     Pause(ACTION_DELAY)
-    if Journal.Contains("There is no metal here to mine") or Journal.Contains("Target cannot be seen") or Journal.Contains("You can't mine there") then
+    if Journal.Contains("There is no metal here to mine") or Journal.Contains("Target cannot be seen") or Journal.Contains("You can't mine") then
         Messages.Print("Done", Colors.Caution)
         break
     end
@@ -131,7 +132,11 @@ end
 for index, oreGraphic in ipairs(ORE_GRAPHICS) do
     for _, ore in ipairs(Items.FindByFilter({ onground = false, graphics = oreGraphic})) do
         if ore and ore.Container == Player.Backpack.Serial and not tableContains(KEEP_HUES, ore.Hue) then
-            if NOISY_MODE then Player.Say("- " .. ore.Name .. " -", Colors.Warning) end
+            if NOISY_MODE then
+                Player.Say("- " .. ore.Name .. " -", Colors.Warning)
+            else
+                Messages.OverheadMobile(Player.Serial, "- " .. ore.Name .. " -", Colors.Warning)
+            end
             Player.PickUp(ore.Serial, ore.Amount)
             Player.DropOnGround()
             Pause(ACTION_DELAY)
