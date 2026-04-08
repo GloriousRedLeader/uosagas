@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw around with this.
-local VERSION = "1.5"
+local VERSION = "1.6"
 
 -- Probably don't mess with this either
 local ACTION_DELAY = 750
@@ -99,7 +99,7 @@ end
 
 while true do
     Pause(ACTION_DELAY)
-    if Journal.Contains("There's not enough wood") or Journal.Contains("You can't use an axe on that") then
+    if Journal.Contains("There's not enough wood") or Journal.Contains("You can't use an axe on that") or Journal.Contains("Target cannot be seen") or Journal.Contains("That is too far away") then
         Messages.Print("Done", Colors.Caution)
         break
     end
