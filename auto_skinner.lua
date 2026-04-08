@@ -8,7 +8,7 @@
 -- By Chaz II (updated from original by JaseOwns)
 -- Slimmed down and made significantly worse by omg arturo
 -- Don't screw aroudn with this.
-local VERSION = "1.4"
+local VERSION = "1.5"
 
 local CORPSE_GRAPHIC = 0x2006
 local SKINNING_KNIFE = 0xFEA9
@@ -29,6 +29,75 @@ local KEEP_HUES = { -- 0x0000, -- Regular
     -- 0x0979, -- Agapite
     0x089F, -- Verite
     0x08AB -- Valorite
+}
+
+-- Primitive auto looter. Does not scavenge.
+local AUTOLOOT = true
+
+-- Auto looter, add graphic ids here. Only applies when AUTOLOOT = true
+local graphicIdLootableItemPriorityList =
+{
+    -- (highest priority)
+    0xFDAD,  -- Eren Coin
+    0x0F91,  -- Fragment
+    0x2BF7,  -- Mystic Crafting Material
+    0x41E7,  -- Weapon Rack
+    0x41E6,  -- Weapon Rack
+    0x9EE7,  -- Hanging Plate Chest
+    0x9EE8,  -- Hanging Plate Chest
+    0x241E,  -- Blue Urn
+    0x21FC,  -- Pile Of Skulls
+    0x20D9,  -- Gargoyle Statuette
+    0x5726,  -- Fey Wings
+    0x2109,  -- Ghoul Statuette
+    0x20D3,  -- Daemon Statuette
+    0x20F4,  -- Gazer Statuette
+    0x212F,  -- Giant Toad Statuette
+    0x212C,  -- Duskfen Matriarch Statuette
+    0x20ED,  -- Air Elemental Statuette
+    0x20F3,  -- Fire Elemental Statuette
+    0x2D8A,  -- Changeling Statuette
+    0xFD8C,  -- Soul
+    0xFD8F,  -- Mastery Gem
+    0x0E73,  -- Skill Cap Ball
+    0xFF3A,  -- Skill Scroll
+    0x9FF8,  -- Paragon Chest
+    0x9FF9,  -- Paragon Chest
+    --0x2D9D,  -- Grimoire
+    --0x0EED,  -- Gold
+    --0x14EC,  -- Treasure Map
+    0x573B,  -- Pigments
+    --0x0EB2,  -- Lap Harp
+    --0x0EB1,  -- Standing Harp
+    --0x0EB3,  -- Lute
+    --0x0E9D,  -- Tambourine
+    --0x0E9E,  -- Tambourine
+    --0x0E9C,  -- Drum
+    --0x0F26,  -- Diamond
+    --0x0F10,  -- Emerald
+    --0x0F16,  -- Amethyst
+    --0x0F10,  -- Emerald
+    --0x0F19,  -- Saphire
+    --0x0F25,  -- Amber
+    --0x0F13,  -- Ruby
+    --0x0000,  -- Daemon Scales
+    --0x26B4,  -- Daemon Scales
+    --0x0F7E,  -- Bones
+    --0xFCA9,  -- Hardened Resin
+    --0x318B,  -- Enchanted Bark
+    --0x0E21,  -- Clean Bandage
+    --0x0F8D,  -- Spider Silk
+    --0x0F86,  -- Mandrake Root
+    --0x0F8C,  -- Ash
+    --0x0F7B,  -- Blood Moss
+    --0x0F88,  -- Night Shade
+    --0x0F84,   -- Garlic
+    --0x0F7A,   -- Black Pearl
+    --0x0F85,   -- Ginseng
+    --0x0F3F,   -- Arrows
+    --0x1BFB,   -- Bolts
+    --0x09F1,  -- Raw Ribs
+    -- (lowest priority)
 }
 
 ------------------------------------------------------------------------------------
@@ -57,6 +126,13 @@ Messages.Print("__________________________________", Colors.Info)
 --  HELPERS
 ---------------------------------------------------------
 
+local graphicIdLootableSet = {}
+local graphicIdToPriority = {}
+for i, graphic in ipairs(graphicIdLootableItemPriorityList) do
+    graphicIdLootableSet[graphic] = true
+    graphicIdToPriority[graphic] = i
+end
+
 -- Helepr
 function tableContains(tbl, val)
     for _, value in ipairs(tbl) do
@@ -77,6 +153,97 @@ function GetSkinningKnife()
 end
 end
 
+function GetSortedItemList()
+    local seriableIdLootPriorityList = {}
+    local itemList = Items.FindByFilter({onground=false})
+    for index, item in ipairs(itemList) do
+        if item.RootContainer == Player.Serial then
+            goto continue
+        end
+
+        if item.RootContainer == Player.Backpack.Serial then
+            goto continue
+        end
+
+        --        if item.RootContainer == lootbag.Serial then
+        --            goto continue
+        --        end
+
+        local container = Items.FindBySerial(item.Container)
+
+        if container == nil or container.Name == nil or string.find(container.Name:lower(), "corpse") == nil or container.Distance > 2 then
+            goto continue
+        end
+
+        if item.Distance == nil or (item.Distance > 2 and item.Distance < 16) then
+            goto continue
+        end
+
+        if not graphicIdLootableSet[item.Graphic] then
+            goto continue
+        end
+
+        if item.IsLootable == false then
+            goto continue
+        end
+
+        if item.Name == nil then
+            goto continue
+        end
+
+        if item.Properties == nil then
+            goto continue
+        end
+
+        local isLockedDown = WordCheckMultiple(item.Properties, "Locked Down")
+        if isLockedDown == true then
+            goto continue
+        end
+
+        local weight = extract_weight(item)
+        if weight ~= nil and weight + Player.Weight > Player.MaxWeight then
+            --if not Cooldown("FatAlert") then
+            if os.time() * 1000 > fatAlertReadyMs then
+                --Messages.Overhead("too fat, big heavy .. no pick up " .. item.Name .. " (" .. tostring(weight) .. " stones)", 47, Player.Serial)
+                Messages.OverheadMobile(Player.Serial, "too fat, big heavy .. no pick up " .. item.Name .. " (" .. tostring(weight) .. " stones)", 47)
+                --Cooldown("FatAlert", 5000)
+                fatAlertReadyMs = (os.time() * 1000) + 5000
+            end
+            goto continue
+        end
+
+        --Messages.Print("Found item " .. item.Name .. " in root container " .. item.RootContainer)
+
+        table.insert(seriableIdLootPriorityList, item)
+        ::continue::
+    end
+
+    table.sort(seriableIdLootPriorityList, function(a, b)
+        local priorityA = graphicIdToPriority[a.Graphic] or math.huge
+        local priorityB = graphicIdToPriority[b.Graphic] or math.huge
+        if priorityA == priorityB then
+            return (a.Name or "") < (b.Name or "")
+        end
+        return priorityA < priorityB
+    end)
+
+    return seriableIdLootPriorityList
+end
+
+function AutoLoot()
+    if AUTOLOOT then
+        local sortedItemList = GetSortedItemList()
+        if #sortedItemList > 0 then
+            for _, item in ipairs(sortedItemList) do
+                Player.PickUp(sortedItemList[1].Serial, sortedItemList[1].Amount)
+                Player.DropInBackpack()
+                Pause(ACTION_DELAY)
+            end
+        end
+    end
+end
+
+
 ---------------------------------------------------------
 --  CORPSE TRACKING (Only process once)
 ---------------------------------------------------------
@@ -89,6 +256,8 @@ end
 function MarkCorpseProcessed(serial)
     processedCorpses[serial] = true
 end
+
+
 
 ---------------------------------------------------------
 --  MAIN LOOP
@@ -149,6 +318,9 @@ while true do
                         Pause(ACTION_DELAY)
                     end
                 end
+
+                -- Auto Loot
+                AutoLoot()
 
                 -- Mark corpse processed so it never repeats
                 MarkCorpseProcessed(corpse.Serial)
