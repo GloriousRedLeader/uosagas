@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw around with this.
-local VERSION = "1.6"
+local VERSION = "1.7"
 
 -- Probably don't mess with this either
 local ACTION_DELAY = 750
@@ -110,6 +110,7 @@ while true do
     Pause(ACTION_DELAY)
     if Journal.Contains("There is no metal here to mine") or Journal.Contains("Target cannot be seen") or Journal.Contains("You can't mine") or Journal.Contains("That is too far away") then
         Messages.Print("Done", Colors.Caution)
+        Messages.OverheadMobile(Player.Serial, "Done", Colors.Caution)
         break
     end
     Journal.Clear()
