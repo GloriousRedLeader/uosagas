@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw aroudn with this.
-local VERSION = "1.2"
+local VERSION = "1.3"
 
 -- Milliseconds of delay between actions
 local ACTION_DELAY = 550
@@ -188,6 +188,7 @@ local graphicIdLootableItemPriorityList =
     0x0F85,   -- Ginseng
     0x0F3F,   -- Arrows
     0x1BFB,   -- Bolts
+    -- 0x09F1,  -- Raw Ribs
     -- (lowest priority)
 }
 
