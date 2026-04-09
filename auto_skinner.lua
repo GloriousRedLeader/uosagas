@@ -8,7 +8,7 @@
 -- By Chaz II (updated from original by JaseOwns)
 -- Slimmed down and made significantly worse by omg arturo
 -- Don't screw aroudn with this.
-local VERSION = "1.5"
+local VERSION = "1.6"
 
 local CORPSE_GRAPHIC = 0x2006
 local SKINNING_KNIFE = 0xFEA9
@@ -21,14 +21,14 @@ local NOISY_MODE = true
 
 -- Only keep these leathers, rest gets dropped on groud
 local KEEP_HUES = { -- 0x0000, -- Regular
-    0x0973, -- Dull Copper
-    -- 0x0966, -- Shadow Iron
-    -- 0x096D, -- Copper
-    -- 0x0972, -- Bronze
-    -- 0x08A5, -- Gold
-    -- 0x0979, -- Agapite
-    0x089F, -- Verite
-    0x08AB -- Valorite
+0x0973, -- Dull Copper
+-- 0x0966, -- Shadow Iron
+-- 0x096D, -- Copper
+-- 0x0972, -- Bronze
+-- 0x08A5, -- Gold
+-- 0x0979, -- Agapite
+0x089F, -- Verite
+0x08AB -- Valorite
 }
 
 -- Primitive auto looter. Does not scavenge.
@@ -97,7 +97,13 @@ local graphicIdLootableItemPriorityList =
     --0x0F3F,   -- Arrows
     --0x1BFB,   -- Bolts
     --0x09F1,  -- Raw Ribs
+    0x0E86,  -- Pickaxe
     -- (lowest priority)
+}
+
+-- This is actually encoded in the Item.Amount field...
+local SKIP_CORPSES = {
+    400, -- Human
 }
 
 ------------------------------------------------------------------------------------
@@ -280,43 +286,52 @@ while true do
         local corpses = Items.FindByFilter(corpseFilter)
         for _, corpse in ipairs(corpses) do
             if not HasProcessedCorpse(corpse.Serial) then
-                Messages.Overhead("Processing corpse: " .. (corpse.Name or "Unknown"), 69, Player.Serial)
-
-                -- Skin the corpse
-                Player.UseObject(skinningKnife.Serial)
-                Target.WaitForTarget(1000, false)
-                Target.TargetSerial(corpse.Serial)
-                Pause(ACTION_DELAY)
-
-                -- Open the corpse
-                Player.UseObject(corpse.Serial)
-                Pause(ACTION_DELAY)
-
-                local hides = Items.FindByFilter({
-                    graphics = {0x1079},
-                    onground = false
-                })
-                for _, hide in ipairs(hides) do
-                    if hide.RootContainer == Player.Serial and not tableContains(KEEP_HUES, hide.Hue) then
-                        if NOISY_MODE then
-                            Player.Say("- " .. hide.Name .. " -", Colors.Warning)
-                        else
-                            Messages.OverheadMobile(Player.Serial, "- " .. hide.Name .. " -", Colors.Warning)
-                        end
-                        Player.PickUp(hide.Serial, hide.Amount)
-                        Player.DropOnGround()
-                        Pause(ACTION_DELAY)
-                    elseif hide.RootContainer == Player.Serial and scissors ~= nil then
-                        if NOISY_MODE then
-                            Player.Say("+ " .. hide.Name .. " +", Colors.Confirm)
-                        else
-                            Messages.OverheadMobile(Player.Serial, "+ " .. hide.Name .. " +", Colors.Confirm)
-                        end
-                        Player.UseObject(scissors.Serial)
-                        Target.WaitForTarget(3000)
-                        Target.TargetSerial(hide.Serial)
+                if tableContains(SKIP_CORPSES, corpse.Amount) then
+                    Messages.Print("Skipping corpse: " .. (corpse.Name or "Unknown"), Colors.Warning)
+                    if AUTOLOOT then
+                        Player.UseObject(corpse.Serial)
                         Pause(ACTION_DELAY)
                     end
+                else
+                    Messages.Print("Processing corpse: " .. (corpse.Name or "Unknown"), Colors.Info)
+
+                    -- Skin the corpse
+                    Player.UseObject(skinningKnife.Serial)
+                    Target.WaitForTarget(1000, false)
+                    Target.TargetSerial(corpse.Serial)
+                    Pause(ACTION_DELAY)
+
+                    -- Open the corpse
+                    Player.UseObject(corpse.Serial)
+                    Pause(ACTION_DELAY)
+
+                    local hides = Items.FindByFilter({
+                        graphics = {0x1079},
+                        onground = false
+                    })
+                    for _, hide in ipairs(hides) do
+                        if hide.RootContainer == Player.Serial and not tableContains(KEEP_HUES, hide.Hue) then
+                            if NOISY_MODE then
+                                Player.Say("- " .. hide.Name .. " -", Colors.Warning)
+                            else
+                                Messages.OverheadMobile(Player.Serial, "- " .. hide.Name .. " -", Colors.Warning)
+                            end
+                            Player.PickUp(hide.Serial, hide.Amount)
+                            Player.DropOnGround()
+                            Pause(ACTION_DELAY)
+                        elseif hide.RootContainer == Player.Serial and scissors ~= nil then
+                            if NOISY_MODE then
+                                Player.Say("+ " .. hide.Name .. " +", Colors.Confirm)
+                            else
+                                Messages.OverheadMobile(Player.Serial, "+ " .. hide.Name .. " +", Colors.Confirm)
+                            end
+                            Player.UseObject(scissors.Serial)
+                            Target.WaitForTarget(3000)
+                            Target.TargetSerial(hide.Serial)
+                            Pause(ACTION_DELAY)
+                        end
+                    end
+
                 end
 
                 -- Auto Loot
