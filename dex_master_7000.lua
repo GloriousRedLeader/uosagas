@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw aroudn with this.
-local VERSION = "1.3"
+local VERSION = "1.4"
 
 -- Milliseconds of delay between actions
 local ACTION_DELAY = 550
@@ -927,7 +927,7 @@ function UseBandage()
                 Target.Self()
 
                 -- Calculate delay based on Dex
-                local selfDelay = ((8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100) + 1500
+                local selfDelay = ((8.0 + 0.85 * ((130 - Player.Dex) / 20)) * 1100) 
 
                 Messages.OverheadMobile(Player.Serial, "+ Healing Self +", 67)
                 useBandageReadyMs = (os.time() * 1000) + selfDelay
