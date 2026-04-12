@@ -8,7 +8,7 @@
 -- By Chaz II (updated from original by JaseOwns)
 -- Slimmed down and made significantly worse by omg arturo
 -- Don't screw aroudn with this.
-local VERSION = "1.6"
+local VERSION = "1.7"
 
 local CORPSE_GRAPHIC = 0x2006
 local SKINNING_KNIFE = 0xFEA9
@@ -104,6 +104,7 @@ local graphicIdLootableItemPriorityList =
 -- This is actually encoded in the Item.Amount field...
 local SKIP_CORPSES = {
     400, -- Human
+    401, -- Female
 }
 
 ------------------------------------------------------------------------------------
