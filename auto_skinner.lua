@@ -8,7 +8,7 @@
 -- By Chaz II (updated from original by JaseOwns)
 -- Slimmed down and made significantly worse by omg arturo
 -- Don't screw aroudn with this.
-local VERSION = "1.7"
+local VERSION = "1.8"
 
 local CORPSE_GRAPHIC = 0x2006
 local SKINNING_KNIFE = 0xFEA9
@@ -140,7 +140,17 @@ for i, graphic in ipairs(graphicIdLootableItemPriorityList) do
     graphicIdToPriority[graphic] = i
 end
 
--- Helepr
+function WordCheckMultiple(str1, keywordString)
+    local lowerStr = string.lower(str1)
+    for word in string.gmatch(keywordString, "%S+") do
+        local lowerWord = string.lower(word)
+        if not string.find(lowerStr, lowerWord, 1, true) then
+            return false
+        end
+    end
+    return true
+end
+
 function tableContains(tbl, val)
     for _, value in ipairs(tbl) do
         if value == val then
