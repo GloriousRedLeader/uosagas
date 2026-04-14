@@ -8,7 +8,7 @@
 -- By Chaz II (updated from original by JaseOwns)
 -- Slimmed down and made significantly worse by omg arturo
 -- Don't screw aroudn with this.
-local VERSION = "1.8"
+local VERSION = "1.9"
 
 local CORPSE_GRAPHIC = 0x2006
 local SKINNING_KNIFE = 0xFEA9
@@ -138,6 +138,28 @@ local graphicIdToPriority = {}
 for i, graphic in ipairs(graphicIdLootableItemPriorityList) do
     graphicIdLootableSet[graphic] = true
     graphicIdToPriority[graphic] = i
+end
+
+function extract_weight(item)
+    -- Pattern explanation:
+    -- .*- matches any character (including newlines due to how Lua handles this in patterns) zero or more times, as few as possible.
+    -- (?:...) - this is a general regex concept, but not directly supported in standard Lua patterns.
+    -- The approach below uses Lua's native patterns and capture groups.
+
+    -- Attempt to match "Weight: " followed by 1-3 digits.
+    -- 'Weight:%s*(%d%d?%d?)'
+    -- %s* matches zero or more whitespace characters.
+    -- (%d%d?%d?) captures 1, 2, or 3 digits.
+    local weight_str = string.match(item.Properties, "Weight:%s*(%d%d?%d?) Stone")
+
+    if weight_str then
+        return tonumber(weight_str) -- Convert the captured string to a number
+    else
+        -- If the "Weight: " pattern isn't found, you might want to return nil or a default value
+        -- depending on your specific needs when it's missing entirely.
+        -- In this case, it returns nil, so you can handle it.
+        return nil
+    end
 end
 
 function WordCheckMultiple(str1, keywordString)
