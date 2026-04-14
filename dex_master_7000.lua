@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw around with this.
-local VERSION = "1.5"
+local VERSION = "1.6"
 
 -- Milliseconds of delay between actions
 local ACTION_DELAY = 650
@@ -982,16 +982,16 @@ function EquipWeapon()
 
     local weaponGraphic, weaponSlot = getWeaponConfig()
     local equippedWeapon = Items.FindByLayer(weaponSlot)
-    --if equippedWeapon and equippedWeapon.Graphic == weaponGraphic then return end
 
     if equippedWeapon and equippedWeapon.Graphic == weaponGraphic then
         if getItemDurability(equippedWeapon) > 0 then
             -- They have the right weapon, and it has durability
             return
         else
+            Messages.Print("Weapon broken", Colors.Alert)
             -- They have the right weapon, but it has 0 durability. So unequip it
             if weaponSlot == 1 then
-                Player.ClearHands("right")
+                Player.ClearHands("left")
             else
                 Player.ClearHands("both")
             end
@@ -1059,7 +1059,7 @@ function EquipWeapon()
     -- If we have something else in our hands, remove it
     if equippedWeapon then
         if weaponSlot == 1 then
-            Player.ClearHands("right")
+            Player.ClearHands("left")
         else
             Player.ClearHands("both")
         end
