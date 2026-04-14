@@ -3,32 +3,20 @@
 -- by OMG Arturo
 ------------------------------------------------------------------------------------
 
--- Don't screw around with this.
-local VERSION = "1.5"
+-- Don't screw aroudn with this.
+local VERSION = "1.0"
 
 -- Milliseconds of delay between actions
-local ACTION_DELAY = 650
+local ACTION_DELAY = 750
 
--- Will attempt to continuously equip a weapon when set to true
--- Weapon is determined by the config below, plus some runtime
--- conditions like durability and overall power (preferring more
--- powerful weapons).
--- NOTE: THIS WILL ALSO UNEQUIP A WEAPON WITH 0 DURABILITY
--- AND IT WILL NOT RE-EQUIP IT. Trust me. This is good.
-local EQUIP_WEAPON = true
-
--- Update these according to your spec
-local WEAPON_CONFIG = {
-    ["maces"]   = { graphic = 0x13B0, slot = 1 },       -- War Axe (9-Iron)
-    ["swords"]  = { graphic = 0x13FF, slot = 1 },       -- Katana
-    ["fencing"] = { graphic = 0x1401, slot = 1 },       -- Kyrss
-    ["archery"] = { graphic = 0x13B2, slot = 2 }        -- Bow
-}
+-- Use /say when dropping or keeping a resource.
+-- Otherwise it will print privately over your head.
+local NOISY_MODE = true
 
 -- Auto-pickup mushrooms when you are out of combat (no current enemy selected)
 -- You also need to be above 80 health, not poisoned, etc. This is true for a lot of
 -- these non-essential functions so heals and such can be prioritized.
-local PICKUP_MUSHROOMS = true
+local PICKUP_MUSHROOMS = false
 
 -- Will auto attack monsters so you dont have to. Warning: Will
 -- attack grays and reds  if you configure it!
@@ -51,11 +39,11 @@ local USE_INFLAMMABLE_POTS = false
 local SKIP_DEMONS = true
 
 -- Auto apply poison to blade to WEAPON_GRAPHIC.
-local USE_POISONS = true
+local USE_POISONS = false
 
 -- Only apply poison to your weapon if you have a current target and
 -- the current target does not have poison on it already. This option conserves poisons.
-local SMART_POISONING = true
+local SMART_POISONING = false
 
 -- Required when POISONS = true. Only poison THIS weapon graphic because
 -- poisoners dont always want to poison EVERY weapon. For example switch
@@ -67,10 +55,10 @@ local WEAPON_GRAPHIC = 0 -- ANY weapon
 
 -- Auto bandage yourself or allies
 -- Cooldown 10 seconds
-local USE_BANDAGES = true
+local USE_BANDAGES = false
 
 -- Will use bandages on friends defined in FRIEND_SERIALS below
-local BANDAGES_ON_FRIENDS = true
+local BANDAGES_ON_FRIENDS = false
 
 -- A decimal representing percentage of a friend's health bar. Bandage healing will
 -- only kick in if they are below this threshold, e.g. 0.9  (less than 90%)
@@ -101,25 +89,25 @@ local FRIEND_SERIALS = {
 }
 
 -- Auto pop pouches
-local USE_POUCHES = true
+local USE_POUCHES = false
 
 -- Primitive auto looter. Does not scavenge.
 local AUTOLOOT = true
 
 -- IF this is true and you ahve more than 20 peacemaking
-local USE_PEACE = true
+local USE_PEACE = false
 
 -- IF this is true and you have more than 20 discordance
-local USE_DISCORD = true
+local USE_DISCORD = false
 
 -- If music is > 80, will cast this every X seconds
-local USE_SONG_OF_HEALING = true
+local USE_SONG_OF_HEALING = false
 
 -- Recast song of healing every X ms
 local SONG_OF_HEALING_RECAST = 188 * 1000
 
 -- If music is > 80, will attempt to cast song of fortune
-local USE_SONG_OF_FORTUNE = true
+local USE_SONG_OF_FORTUNE = false
 
 -- Number of ms to recast song of fortune. I think it's OK
 -- to cast it often. Even if the buff lasts for 12 minutes, it is
@@ -127,10 +115,15 @@ local USE_SONG_OF_FORTUNE = true
 local SONG_OF_FORTUNE_RECAST = 725 * 1000
 
 -- If music > 80, will attempt to cast song of light
-local USE_SONG_OF_LIGHT = true
+local USE_SONG_OF_LIGHT = false
 
 -- Number of ms to recast song of light.
 local SONG_OF_LIGHT_RECAST = 725 * 1000
+
+-- When script starts it finds your currently equipped weapon.
+-- It will then check every few seconds to re-equip it if its not
+-- currently equipped.
+local REEQUIP_WEAPON = true
 
 -- Use orange potion when poisoned. Drinking logic:
 -- 1. If 80 alchemy, just drinks
@@ -164,11 +157,11 @@ local graphicIdLootableItemPriorityList =
     0xFD8F,  -- Mastery Gem
     0x0E73,  -- Skill Cap Ball
     0xFF3A,  -- Skill Scroll
-    0x9FF8,  -- Paragon Chest
-    0x9FF9,  -- Paragon Chest
+    --0x9FF8,  -- Paragon Chest
+    --0x9FF9,  -- Paragon Chest
     --0x2D9D,  -- Grimoire
-    0x0EED,  -- Gold
-    0x14EC,  -- Treasure Map
+    --0x0EED,  -- Gold
+    --0x14EC,  -- Treasure Map
     0x573B,  -- Pigments
     --0x0EB2,  -- Lap Harp
     --0x0EB1,  -- Standing Harp
@@ -178,29 +171,60 @@ local graphicIdLootableItemPriorityList =
     --0x0E9C,  -- Drum
     0x0F26,  -- Diamond
     0x0F10,  -- Emerald
-    0x0F16,  -- Amethyst
-    0x0F10,  -- Emerald
-    0x0F19,  -- Saphire
-    0x0F25,  -- Amber
-    0x0F13,  -- Ruby
-    0x0000,  -- Daemon Scales
+    --0x0F16,  -- Amethyst
+    --0x0F10,  -- Emerald
+    --0x0F19,  -- Saphire
+    --0x0F25,  -- Amber
+    --0x0F13,  -- Ruby
+    --0x0000,  -- Daemon Scales
     --0x26B4,  -- Daemon Scales
     --0x0F7E,  -- Bones
     --0xFCA9,  -- Hardened Resin
     --0x318B,  -- Enchanted Bark
-    0x0E21,  -- Clean Bandage
-    0x0F8D,  -- Spider Silk
-    0x0F86,  -- Mandrake Root
-    0x0F8C,  -- Ash
-    0x0F7B,  -- Blood Moss
-    0x0F88,  -- Night Shade
-    0x0F84,   -- Garlic
-    0x0F7A,   -- Black Pearl
-    0x0F85,   -- Ginseng
+    --0x0E21,  -- Clean Bandage
+    --0x0F8D,  -- Spider Silk
+    --0x0F86,  -- Mandrake Root
+    --0x0F8C,  -- Ash
+    --0x0F7B,  -- Blood Moss
+    --0x0F88,  -- Night Shade
+    --0x0F84,   -- Garlic
+    --0x0F7A,   -- Black Pearl
+    --0x0F85,   -- Ginseng
     0x0F3F,   -- Arrows
-    0x1BFB,   -- Bolts
+    --0x1BFB,   -- Bolts
     -- 0x09F1,  -- Raw Ribs
     -- (lowest priority)
+}
+
+-- Enable to automatically skin corpses. Needs a skinning knife.
+local AUTO_SKIN_CORPSES = true
+
+-- Used for skinning corpses
+local CORPSE_GRAPHIC = 0x2006
+
+-- Used for skinning corpses
+local SKINNING_KNIFE = 0xFEA9
+
+-- Used for skinning corpses (cuts leather you want to keep)
+local SCISSOR_GRAPHIC = 0x0F9F
+
+-- Only keep these leathers, rest gets dropped on groud
+local KEEP_HUES = {
+    -- 0x0000, -- Regular
+    --0x0973, -- Dull Copper
+    -- 0x0966, -- Shadow Iron
+    -- 0x096D, -- Copper
+    -- 0x0972, -- Bronze
+    -- 0x08A5, -- Gold
+    -- 0x0979, -- Agapite
+    0x089F, -- Verite
+    0x08AB -- Valorite
+}
+
+-- This is actually encoded in the Item.Amount field...
+local SKIP_CORPSES = {
+    400, -- Human
+    401, -- Female
 }
 
 -- Auto attack won't target these
@@ -246,7 +270,8 @@ local INSTRUMENTS = {
 
 local peaceReadyMs = (os.time() * 1000) + 1000
 local discordReadyMs = (os.time() * 1000) + 1000
-local equipWeaponReadyMs = (os.time() * 1000) + 1000
+local reEquipShieldReadyMs = (os.time() * 1000) + 1000
+local reEquipWeaponReadyMs = (os.time() * 1000) + 1000
 local songOfHealingReadyMs = (os.time() * 1000) + 1000
 local songOfLightReadyMs = (os.time() * 1000) + 1000
 local songOfFortuneReadyMs = (os.time() * 1000) + 1000
@@ -254,6 +279,39 @@ local inflammableReadyMs = (os.time() * 1000) + 1000
 local checkPoison = os.time() + 1
 local useBandageReadyMs = (os.time() + 1) * 1000
 local fatAlertReadyMs = (os.time() * 1000) + 1000
+
+-- Helepr
+function tableContains(tbl, val)
+    for _, value in ipairs(tbl) do
+        if value == val then
+            return true
+        end
+    end
+    return false
+end
+
+---------------------------------------------------------
+--  CORPSE TRACKING (Only process once) for skinning
+---------------------------------------------------------
+local processedCorpses = {}
+
+function HasProcessedCorpse(serial)
+    return processedCorpses[serial] == true
+end
+
+function MarkCorpseProcessed(serial)
+    processedCorpses[serial] = true
+end
+
+function GetSkinningKnife()
+    for i, item in ipairs(Items.FindByFilter({
+        graphics = {SKINNING_KNIFE}
+    })) do
+    if item.RootContainer == Player.Serial then
+        return item
+    end
+end
+end
 
 Cooldown = {}; do
 local data = {}
@@ -323,19 +381,7 @@ function WordCheckMultiple(str1, keywordString)
     return true
 end
 
--- Written By John-B9
--- Original Source: https://github.com/John-B9/UO-Sagas/blob/main/IPLib.lua
-local function getItemDurability(item)
-    local cleanProperties = string.gsub(item.Properties, "<.->", "")
-    local regexMatchIter = string.gmatch(cleanProperties, "Durability: (%d+)/(%d+)")
-    local lPropertyVal, rPropertyVal = regexMatchIter()
-    if lPropertyVal == nil or rPropertyVal == nil then
-        return nil
-    end
-    return tonumber(lPropertyVal)
-end
-
-function getItemWeight(item)
+function extract_weight(item)
     -- Pattern explanation:
     -- .*- matches any character (including newlines due to how Lua handles this in patterns) zero or more times, as few as possible.
     -- (?:...) - this is a general regex concept, but not directly supported in standard Lua patterns.
@@ -357,41 +403,6 @@ function getItemWeight(item)
     end
 end
 
--- Returns the entry from WEAPON_CONFIG
--- based on user's highest weapon skill, e.g.
--- graphic (int), slot (int)
-function getWeaponConfig()
-
-    -- 1. Put the string names and their values into a table
-    local combatSkills = {
-        ["swords"] = Skills.GetValue("Swordsmanship"),
-        ["maces"] = Skills.GetValue("Mace Fighting"),
-        ["fencing"] = Skills.GetValue("Fencing"),
-        ["archery"] = Skills.GetValue("Archery")
-    }
-
-    local bestSkillName = "none"
-    local highestValue = -1
-
-    -- 2. Iterate through the table to find the max
-    for skillName, skillValue in pairs(combatSkills) do
-        -- Ensure we only check valid numbers in case the API returns nil
-        if skillValue and skillValue > highestValue then
-            highestValue = skillValue
-            bestSkillName = skillName
-        end
-    end
-
-    local WEAPON_CONFIG = {
-        ["maces"]   = { graphic = 0x13B0, slot = 1 },       -- War Axe (9-Iron)
-        ["swords"]  = { graphic = 0x13FF, slot = 1 },       -- Katana
-        ["fencing"] = { graphic = 0x1401, slot = 1 },       -- Kyrss
-        ["archery"] = { graphic = 0x13B2, slot = 2 }        -- Bow
-    }
-
-    -- 3. Return the tuple
-    return WEAPON_CONFIG[bestSkillName]["graphic"], WEAPON_CONFIG[bestSkillName]["slot"]
-end
 
 local serialIdCorpseIgnoreList = {}
 function IgnoreCorpse(serialIdCorpse)
@@ -481,7 +492,7 @@ function GetSortedItemList()
             goto continue
         end
 
-        local weight = getItemWeight(item)
+        local weight = extract_weight(item)
         if weight ~= nil and weight + Player.Weight > Player.MaxWeight then
             --if not Cooldown("FatAlert") then
             if os.time() * 1000 > fatAlertReadyMs then
@@ -511,10 +522,6 @@ function GetSortedItemList()
     return seriableIdLootPriorityList
 end
 
-------------------------------------------------------------------------------------
--- Primary Methods below
-------------------------------------------------------------------------------------
-
 local mobileTargetLast = nil
 local mobileTargetHitpoints = math.huge
 local checkRetarget = os.time() + 1
@@ -525,7 +532,9 @@ function AutoAttack()
     table.sort(mobileList, compareByDistance)
     for index, mobile in ipairs(mobileList) do
         local mobile = mobileList[index]
-        if mobile == nil then goto continue end
+        if mobile == nil then
+            goto continue
+        end
 
         if mobile.Distance == nil then
             goto continue
@@ -535,7 +544,10 @@ function AutoAttack()
             end
         end
 
-        if mobile.IsDead then goto continue end
+        if mobile.IsDead then
+            Messages.Print("Mobile is dead!!!!")
+            goto continue
+        end
 
         if AUTO_ATTACK_REDS == false then
             if mobile.NotorietyFlag == "Murderer" then
@@ -543,55 +555,70 @@ function AutoAttack()
             end
         end
 
-        if mobile.NotorietyFlag == "Innocent" or mobile.NotorietyFlag == "Ally" or mobile.NotorietyFlag == "Invulnerable" then goto continue end
-
-        if mobile.Hits <= 0 then goto continue end
-
-        if mobile.Hits > mobileTargetHitpoints then goto continue end
-
-        if SKIP_DEMONS and mobile.Graphic == 0x0009 and mobile.Hue == 0x0000 then goto continue end
-
-        if containsString(MOBS_TO_IGNORE, mobile.Name) then goto continue end
-
-        if containsString(FRIEND_SERIALS, mobile.Serial) then goto continue end
-
-        mobileTargetHitpoints = mobile.Hits
-        mobileTarget = mobile
-        break
-
-        ::continue::
-    end
-
-    mobileTargetHitpoints = math.huge
-    if mobileTarget ~= nil then
-        if mobileTargetLast == nil or mobileTarget.Serial ~= mobileTargetLast.Serial or os.time() > checkRetarget then
-            mobileTargetLast = mobileTarget
-            Messages.Print("Attacking... " .. mobileTarget.Name, 69, Player.Serial)
-            Player.Attack(mobileTarget.Serial)
-            checkRetarget = os.time() + 3
-            --return mobileTarget
+        if mobile.NotorietyFlag == "Innocent" or mobile.NotorietyFlag == "Ally" or mobile.NotorietyFlag == "Invulnerable" then
+            goto continue
         end
+
+        if mobile.Hits <= 0 then
+            goto continue
+        end
+
+        if mobile.Hits > mobileTargetHitpoints then
+            goto continue
+        end
+
+        if SKIP_DEMONS and mobile.Graphic == 0x0009 and mobile.Hue == 0x0000 then
+            goto continue
+        end
+
+        if containsString(MOBS_TO_IGNORE, mobile.Name)
+        then
+        goto continue
     end
-    return mobileTarget
 
-    --    if mobileTarget ~= nil and Skills.GetValue("Alchemy") >= 100 and EXPLODE_POTS and os.time() > checkExplodePot then
-    --        pots = Items.FindByID(0x0F0D, Player.Backpack.Serial)
-    --        pots = Items.FindByType(0x0F0D)
-
-    --        if pots ~= nil then
-    --            Messages.Print(pots.Serial)
-    --            Items.UseItem(pots.Serial)
-    --            Player.UseObjectByType(0x0E21)
-    --           Target.WaitForTarget(1000)
-    --            Target.TargetSerial(mobileTarget.Serial)
-    --            Messages.Print("Throwing Pot")
-    --       else
-    --            Messages.Print("You have no pots")
-    --        end
-    --
-    --        checkExplodePot = os.time() + 5
-    --    end
+    if containsString(FRIEND_SERIALS, mobile.Serial)
+    then
+    goto continue
 end
+
+mobileTargetHitpoints = mobile.Hits
+mobileTarget = mobile
+break
+
+::continue::
+end
+
+mobileTargetHitpoints = math.huge
+if mobileTarget ~= nil then
+    if mobileTargetLast == nil or mobileTarget.Serial ~= mobileTargetLast.Serial or os.time() > checkRetarget then
+        mobileTargetLast = mobileTarget
+        Messages.Print("Attacking... " .. mobileTarget.Name, 69, Player.Serial)
+        Player.Attack(mobileTarget.Serial)
+        checkRetarget = os.time() + 3
+        --return mobileTarget
+    end
+end
+return mobileTarget
+
+--    if mobileTarget ~= nil and Skills.GetValue("Alchemy") >= 100 and EXPLODE_POTS and os.time() > checkExplodePot then
+--        pots = Items.FindByID(0x0F0D, Player.Backpack.Serial)
+--        pots = Items.FindByType(0x0F0D)
+
+--        if pots ~= nil then
+--            Messages.Print(pots.Serial)
+--            Items.UseItem(pots.Serial)
+--            Player.UseObjectByType(0x0E21)
+--           Target.WaitForTarget(1000)
+--            Target.TargetSerial(mobileTarget.Serial)
+--            Messages.Print("Throwing Pot")
+--       else
+--            Messages.Print("You have no pots")
+--        end
+--
+--        checkExplodePot = os.time() + 5
+--    end
+end
+
 
 function ApplyPoison(mobileTarget)
     if not USE_POISONS then return end
@@ -656,6 +683,7 @@ function PopPouch()
     end
 end
 
+
 function UseDiscord(mobileTarget)
     if not USE_DISCORD then return end
     --if Cooldown("Discord") then return end
@@ -687,6 +715,7 @@ function UseDiscord(mobileTarget)
     Pause(ACTION_DELAY)
 end
 
+
 function UsePeace(mobileTarget)
     if not USE_PEACE then return end
     if os.time() * 1000 < peaceReadyMs then return end
@@ -716,6 +745,7 @@ function UsePeace(mobileTarget)
     Pause(ACTION_DELAY)
 end
 
+
 function UseInflammablePots(targetMobile)
     if not USE_INFLAMMABLE_POTS then return end
     if Skills.GetValue("Alchemy") < 90 then return end
@@ -734,6 +764,7 @@ function UseInflammablePots(targetMobile)
     inflammableReadyMs = (os.time() * 1000) + 10000
     Pause(ACTION_DELAY)
 end
+
 
 function UseSongOfHealing()
     if not USE_SONG_OF_HEALING then return end
@@ -907,6 +938,28 @@ function UseCurePot()
     return
 end
 
+local WEAPON_TO_EQUIP = 0x13B2
+
+function ReequipWeapon()
+    if not REEQUIP_WEAPON then return end
+    if not WEAPON_TO_EQUIP then return end
+    if (os.time() * 1000) < reEquipWeaponReadyMs then return end
+
+    local weapon = Items.FindByLayer(2)
+    if not weapon or weapon.Graphic ~= WEAPON_TO_EQUIP then
+        Player.ClearHands("both")
+        Pause(ACTION_DELAY)
+        weapon = Items.FindByType(WEAPON_TO_EQUIP)
+        if weapon then
+            Messages.Print("Auto equipping weapon", Colors.Info)
+            Player.Equip(weapon.Serial)
+            Pause(ACTION_DELAY)
+        end
+    end
+
+    reEquipWeaponReadyMs = (os.time() * 1000) + 1000
+end
+
 function UseBandage()
     if not USE_BANDAGES then return end
 
@@ -974,112 +1027,93 @@ function UseBandage()
     end
 end -- This closes the function correctly
 
-function EquipWeapon()
-    if (os.time() * 1000) < (equipWeaponReadyMs or 0) then return end
-    equipWeaponReadyMs = (os.time() * 1000) + 1000
+function AutoSkin()
+    if not AUTO_SKIN_CORPSES then return end
+    if Skills.GetValue("Skinning") < 1 then return end
 
-    if not EQUIP_WEAPON then return end
 
-    local weaponGraphic, weaponSlot = getWeaponConfig()
-    local equippedWeapon = Items.FindByLayer(weaponSlot)
-    --if equippedWeapon and equippedWeapon.Graphic == weaponGraphic then return end
+    local skinningKnife = GetSkinningKnife()
+    if skinningKnife == nil then return end
 
-    if equippedWeapon and equippedWeapon.Graphic == weaponGraphic then
-        if getItemDurability(equippedWeapon) > 0 then
-            -- They have the right weapon, and it has durability
-            return
-        else
-            -- They have the right weapon, but it has 0 durability. So unequip it
-            if weaponSlot == 1 then
-                Player.ClearHands("right")
-            else
-                Player.ClearHands("both")
-            end
-            Pause(ACTION_DELAY)
-        end
-    end
+    local scissors = Items.FindByType(SCISSOR_GRAPHIC)
 
-    -- Find Best Weapon
-    local possibleWeapons = Items.FindByFilter({ onground = false, graphics = weaponGraphic, container = true, movable = true })
-
-    local BEST_ITEM_MATERIALS = {
-        0x0000, -- Regular (least desirable)
-        0x0966, -- Shadow Iron
-        0x096D, -- Copper
-        0x0972, -- Bronze
-        0x089F, -- Verite
-        0x08AB, -- Valorite (most desirable)
+    local corpseFilter = {
+        graphics = {CORPSE_GRAPHIC},
+        onground = true,
+        rangemin = 0,
+        rangemax = 2
     }
 
-    -- 1. Create a lookup table where the key is the color ID and the value is its rank (1 to 6)
-    local materialRanks = {}
-    for rank, color in ipairs(BEST_ITEM_MATERIALS) do
-        materialRanks[color] = rank
-    end
+    local corpses = Items.FindByFilter(corpseFilter)
+    for _, corpse in ipairs(corpses) do
+        if not HasProcessedCorpse(corpse.Serial) then
+            if tableContains(SKIP_CORPSES, corpse.Amount) then
+                Messages.Print("Skipping corpse: " .. (corpse.Name or "Unknown"), Colors.Warning)
+                if AUTOLOOT then
+                    Player.UseObject(corpse.Serial)
+                    Pause(ACTION_DELAY)
+                end
+            else
+                Messages.Print("Processing corpse: " .. (corpse.Name or "Unknown"), Colors.Info)
 
-    local chosenWeapon = nil
-    local highestRank = -1
-    local highestDurability = -1 -- Track the durability of the current best weapon
+                -- Skin the corpse
+                Player.UseObject(skinningKnife.Serial)
+                Target.WaitForTarget(1000, false)
+                Target.TargetSerial(corpse.Serial)
+                Pause(ACTION_DELAY)
 
-    -- 2. Find the weapon with the highest rank, then highest durability
-    for _, weapon in ipairs(possibleWeapons) do
-        if weapon.Container == Player.Backpack.Serial then
+                -- Open the corpse
+                Player.UseObject(corpse.Serial)
+                Pause(ACTION_DELAY)
 
-            local currentDurability = getItemDurability(weapon)
-
-            -- Discard if durability is less than 1
-            if currentDurability and currentDurability >= 1 then
-
-                local currentRank = materialRanks[weapon.Hue] or 0
-
-                -- Primary Sort: If the material is strictly better, we always take it
-                if currentRank > highestRank then
-                    highestRank = currentRank
-                    highestDurability = currentDurability
-                    chosenWeapon = weapon
-
-                    -- Secondary Sort: If the material is a tie, we check the durability
-                elseif currentRank == highestRank then
-                    if currentDurability > highestDurability then
-                        highestDurability = currentDurability
-                        chosenWeapon = weapon
+                local hides = Items.FindByFilter({
+                    graphics = {0x1079},
+                    onground = false
+                })
+                for _, hide in ipairs(hides) do
+                    if hide.RootContainer == Player.Serial and not tableContains(KEEP_HUES, hide.Hue) then
+                        if NOISY_MODE then
+                            Player.Say("- " .. hide.Name .. " -", Colors.Warning)
+                        else
+                            Messages.OverheadMobile(Player.Serial, "- " .. hide.Name .. " -", Colors.Warning)
+                        end
+                        Player.PickUp(hide.Serial, hide.Amount)
+                        Player.DropOnGround()
+                        Pause(ACTION_DELAY)
+                    elseif hide.RootContainer == Player.Serial and scissors ~= nil then
+                        if NOISY_MODE then
+                            Player.Say("+ " .. hide.Name .. " +", Colors.Confirm)
+                        else
+                            Messages.OverheadMobile(Player.Serial, "+ " .. hide.Name .. " +", Colors.Confirm)
+                        end
+                        Player.UseObject(scissors.Serial)
+                        Target.WaitForTarget(3000)
+                        Target.TargetSerial(hide.Serial)
+                        Pause(ACTION_DELAY)
                     end
                 end
 
-            end -- End durability check
-        end -- End backpack check
-    end
+            end
 
-    -- Safety check: If no weapons match the filter (or all were broken), exit
-    if not chosenWeapon then
-        Messages.Print("You do not have a valid weapon", Colors.Alert)
-        return
-    end
-
-    -- If we have something else in our hands, remove it
-    if equippedWeapon then
-        if weaponSlot == 1 then
-            Player.ClearHands("right")
-        else
-            Player.ClearHands("both")
+            -- Mark corpse processed so it never repeats
+            MarkCorpseProcessed(corpse.Serial)
         end
-        Pause(ACTION_DELAY)
     end
 
-    Player.Equip(chosenWeapon.Serial)
-    Pause(ACTION_DELAY)
+
 end
 
 Journal.Clear()
 
 -- Print Initial Start-Up Greeting
 Messages.Print("___________________________________", Colors.Info)
-Messages.Print("DexMaster 7000 Online (v" .. VERSION .. ")", Colors.Info)
+Messages.Print("Gatherer Archer Bot Online (v" .. VERSION .. ")", Colors.Info)
 Messages.Print("Be sure to configure options in script", Colors.Info)
 Messages.Print("__________________________________", Colors.Info)
 
+
 while not Player.IsDead and not Player.IsHidden do
-    Pause(5)
+    Pause(1)
     mobileTarget = AutoAttack()
     UseBandage()
     PopPouch()
@@ -1091,7 +1125,8 @@ while not Player.IsDead and not Player.IsHidden do
     UseSongOfHealing()
     UseSongOfFortune(mobileTarget)
     UseSongOfLight(mobileTarget)
-    EquipWeapon()
+    ReequipWeapon()
     PickupMushrooms(mobileTarget)
+    AutoSkin()
     AutoLoot()
 end
