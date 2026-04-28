@@ -160,7 +160,7 @@ local graphicIdLootableItemPriorityList =
     --0x9FF8,  -- Paragon Chest
     --0x9FF9,  -- Paragon Chest
     --0x2D9D,  -- Grimoire
-    --0x0EED,  -- Gold
+    0x0EED,  -- Gold
     --0x14EC,  -- Treasure Map
     0x573B,  -- Pigments
     --0x0EB2,  -- Lap Harp

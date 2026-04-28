@@ -79,7 +79,7 @@ local BANDAGE_FRIENDS_MIN_THRESHOLD_HP = 0.9
 -- Heal damaged friend by their serial if they are close.
 -- Only applicable when BANDAGES = true
 local FRIEND_SERIALS = {
-    0x006C6854, -- omg artie
+    0x006C6854, -- mrs slave
     0x0046C66E, -- mr slave
     0x0012705D, -- omg arthur
     0x003A3990, -- omg arturo
@@ -234,6 +234,7 @@ local POISON_IMMUNE_MOBS = {
     "a lost soul",
     "a gate keeper",
     "a plague beast",
+    "a bone fiend",
 }
 
 local INSTRUMENTS = {
@@ -326,6 +327,11 @@ end
 -- Written By John-B9
 -- Original Source: https://github.com/John-B9/UO-Sagas/blob/main/IPLib.lua
 local function getItemDurability(item)
+    -- sometimes item properteis don't load on an item,
+    -- so a default value of 1 means we are saying there is some durability
+    -- which is most likely true.
+    if not item.Properties then return 1 end
+
     local cleanProperties = string.gsub(item.Properties, "<.->", "")
     local regexMatchIter = string.gmatch(cleanProperties, "Durability: (%d+)/(%d+)")
     local lPropertyVal, rPropertyVal = regexMatchIter()
