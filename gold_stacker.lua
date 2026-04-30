@@ -9,11 +9,11 @@
 -- Don't screw aroudn with this.
 local VERSION = "1.1"
 
-local ACTION_DELAY = 750
+local ACTION_DELAY = 500
 
 local GOLD_GRAPHIC = 0x0EED
 
-local MAX_STACK = 60000
+local MAX_STACK = 25000
 
 ------------------------------------------------------------------------------------
 -- END OPTIONS
@@ -37,78 +37,80 @@ Messages.Print("Gold Stacker (v" .. VERSION .. ")", Colors.Info)
 Messages.Print("Yarrrr", Colors.Info)
 Messages.Print("__________________________________", Colors.Info)
 
-local currentFeetAmount = 0
-local itemsToProcess = {}
+function ProcessGold()
+    -- 1. Find gold currently in the backpack
+    local bagGold = Items.FindByFilter({ graphics = {GOLD_GRAPHIC}, onground = false })
+    local mainBagGold = nil
+    local bagAmount = 0
 
--- 1. Gather all gold on the ground within 2 tiles
-local groundGold = Items.FindByFilter({
-    graphics = {GOLD_GRAPHIC},
-    onground = true,
-    rangemin = 0,
-    rangemax = 2
-})
-
-if groundGold then
-    for _, item in ipairs(groundGold) do
-        -- If distance is 0, it's already at our feet, so we count it as our base pile
-        if item.Distance == 0 then
-            currentFeetAmount = currentFeetAmount + (item.Amount or 1)
-        else
-            table.insert(itemsToProcess, item)
+    if bagGold then
+        for _, item in ipairs(bagGold) do
+            if item.RootContainer == Player.Serial then
+                mainBagGold = item
+                bagAmount = item.Amount or 1
+                break -- We only want to operate on one bag pile at a time
+            end
         end
     end
-end
 
--- 2. Gather all gold currently in inventory
-local invGold = Items.FindByFilter({
-    graphics = {GOLD_GRAPHIC},
-    onground = false
-})
-
-if invGold then
-    for _, item in ipairs(invGold) do
-        -- Ensure it's inside the player's root container (backpack/equipped)
-        if item.RootContainer == Player.Serial then
-            table.insert(itemsToProcess, item)
-        end
-    end
-end
-
--- 3. Process the queued gold
-if currentFeetAmount >= MAX_STACK then
-    Messages.Print("You already have 60,000 or more gold at your feet!", Colors.Alert)
-else
-    local movedAny = false
-
-    for _, item in ipairs(itemsToProcess) do
-        if currentFeetAmount >= MAX_STACK then
-            Messages.Print("Reached the 60,000 gold limit at your feet.", Colors.Confirm)
-            break
-        end
-
-        local availableSpace = MAX_STACK - currentFeetAmount
-        local amountToMove = item.Amount or 1
-
-        -- Only move what we need to reach the maximum 60,000 cap
-        if amountToMove > availableSpace then
-            amountToMove = availableSpace
-        end
-
-        -- Pick up from source
-        Player.PickUp(item.Serial, amountToMove)
+    -- 2. If the bag has a completed 25k stack, drop it on the ground immediately
+    if bagAmount >= MAX_STACK then
+        Player.PickUp(mainBagGold.Serial, MAX_STACK)
         Pause(ACTION_DELAY)
-
-        -- Drop exactly at player coordinates
         Player.DropOnGround()
         Pause(ACTION_DELAY)
-
-        currentFeetAmount = currentFeetAmount + amountToMove
-        movedAny = true
+        return true -- State changed, run loop again
     end
 
-    if movedAny then
-        Messages.Print("Finished! Total gold at feet: " .. tostring(currentFeetAmount), Colors.Info)
-    else
-        Messages.Print("No additional nearby gold to consolidate.", Colors.Caution)
+    -- 3. Find all gold on the ground within 2 tiles
+    local groundGold = Items.FindByFilter({ graphics = {GOLD_GRAPHIC}, onground = true, rangemin = 0, rangemax = 2 })
+    local partialGroundPiles = {}
+
+    if groundGold then
+        for _, item in ipairs(groundGold) do
+            if (item.Amount or 1) < MAX_STACK then
+                table.insert(partialGroundPiles, item)
+            end
+        end
     end
+
+    -- 4. Exit Condition: Bag is empty and there is 1 (or 0) partial piles on the ground
+    if bagAmount == 0 and #partialGroundPiles <= 1 then
+        return false -- We are fully consolidated
+    end
+
+    -- 5. If we have room in the bag, pull exactly what we need from a partial ground pile
+    if #partialGroundPiles > 0 then
+        local targetGroundPile = partialGroundPiles[1]
+        local spaceNeeded = MAX_STACK - bagAmount
+        local amountToTake = math.min(targetGroundPile.Amount or 1, spaceNeeded)
+
+        Player.PickUp(targetGroundPile.Serial, amountToTake)
+        Pause(ACTION_DELAY)
+        Player.DropInBackpack()
+        Pause(ACTION_DELAY)
+        return true -- State changed, run loop again
+    end
+
+    -- 6. Cleanup: Bag has leftover gold (< 25k) but no more ground piles exist to combine with.
+    -- Drop this final remainder on the ground so your inventory is clean.
+    if bagAmount > 0 then
+        Player.PickUp(mainBagGold.Serial, bagAmount)
+        Pause(ACTION_DELAY)
+        Messages.Print("Dropping " .. tostring(mainBagGold.Amount) .. " gold", Colors.Confirm)
+        Player.DropOnGround()
+        Pause(ACTION_DELAY)
+        return true -- State changed, run loop again
+    end
+
+    return false
 end
+
+-- Run the logic continuously until ProcessGold() returns false (meaning no more moves are needed)
+local isRunning = true
+while isRunning do
+    isRunning = ProcessGold()
+    Pause(150) -- Small buffer between loop cycles to prevent client freezing
+end
+
+Messages.Print("Done.", Colors.Info)
