@@ -160,7 +160,7 @@ local graphicIdLootableItemPriorityList =
     --0x9FF8,  -- Paragon Chest
     --0x9FF9,  -- Paragon Chest
     --0x2D9D,  -- Grimoire
-    0x0EED,  -- Gold
+    --0x0EED,  -- Gold
     --0x14EC,  -- Treasure Map
     0x573B,  -- Pigments
     --0x0EB2,  -- Lap Harp
@@ -214,9 +214,9 @@ local KEEP_HUES = {
     --0x0973, -- Dull Copper
     -- 0x0966, -- Shadow Iron
     -- 0x096D, -- Copper
-    -- 0x0972, -- Bronze
-    -- 0x08A5, -- Gold
-    -- 0x0979, -- Agapite
+    0x0972, -- Bronze
+    0x08A5, -- Gold
+    0x0979, -- Agapite
     0x089F, -- Verite
     0x08AB -- Valorite
 }
