@@ -13,7 +13,7 @@ local ACTION_DELAY = 500
 
 local GOLD_GRAPHIC = 0x0EED
 
-local MAX_STACK = 25000
+local MAX_STACK = 20000
 
 ------------------------------------------------------------------------------------
 -- END OPTIONS
