@@ -97,7 +97,13 @@ local FRIEND_SERIALS = {
     0x00391EC1, -- chaz
     0x00358EEE, -- brian damage
     0x0044459B, -- Thuutumi
-    0x003306A5, -- Dardes Jum Zir
+    0x003306A5, --- Dardes Jum Zir
+    0x00405C0C, --- Jack Saklinger
+    0x0047CD42, --- Bakhul Stormhoof
+    0x0046D721, --- Tal Badur
+    0x0047CC8A, --- Craftsman Ludwig
+    0x006D1415, --- James Jenkins
+    0x00732D7C, --- Furnace
 }
 
 -- Auto pop pouches
