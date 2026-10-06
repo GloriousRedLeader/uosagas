@@ -48,7 +48,7 @@ local AUTO_ATTACK_REDS = true
 local USE_INFLAMMABLE_POTS = false
 
 -- When AUTO_ATTACK = true, this will NOT attack demons because mages.
-local SKIP_DEMONS = true
+local SKIP_DEMONS = false
 
 -- Auto apply poison to blade to WEAPON_GRAPHIC.
 local USE_POISONS = true
@@ -71,6 +71,9 @@ local USE_BANDAGES = true
 
 -- Will use bandages on friends defined in FRIEND_SERIALS below
 local BANDAGES_ON_FRIENDS = true
+
+-- Attempts to resurrect your allies
+local AUTO_REZ_FRIENDS = true
 
 -- A decimal representing percentage of a friend's health bar. Bandage healing will
 -- only kick in if they are below this threshold, e.g. 0.9  (less than 90%)
@@ -104,6 +107,8 @@ local FRIEND_SERIALS = {
     0x0047CC8A, --- Craftsman Ludwig
     0x006D1415, --- James Jenkins
     0x00732D7C, --- Furnace
+    0x00743442, --- Woody dun-dun
+    0x0075147B, --- Tron
 }
 
 -- Auto pop pouches
@@ -962,6 +967,7 @@ function UseBandage()
 
             -- Check if ally exists, is alive, in range (1 tile), and needs help
             if ally and ally.Hits > 0 and ally.Distance <= 1 then
+            --if ally and ally.Distance <= 1 then
                 local hpPercent = (ally.Hits / ally.HitsMax)
 
                 if hpPercent <= BANDAGE_FRIENDS_MIN_THRESHOLD_HP or ally.IsPoisoned then
@@ -972,8 +978,13 @@ function UseBandage()
                                 Target.TargetSerial(ally.Serial)
                                 Player.Say("+ Healing " .. ally.Name .. " +", 67)
 
-                                -- Set 5-second delay for healing others
-                                useBandageReadyMs = (os.time() * 1000) + 5000
+                                if ally.Hits > 0 then
+                                    -- Set 5-second delay for healing others
+                                    useBandageReadyMs = (os.time() * 1000) + 5000
+                                else
+                                    -- Set 10-second delay for rezzing others
+                                    useBandageReadyMs = (os.time() * 1000) + 10000
+                                end
                                 Pause(ACTION_DELAY)
                                 return -- Heal one person at a time
                             end

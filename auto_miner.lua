@@ -98,13 +98,16 @@ if not tool then
 end
 
 Journal.Clear()
-Player.UseObject(tool.Serial)
-Messages.Print("Select a node", Colors.Confirm)
-Target.WaitForTarget(3000)
+--Player.UseObject(tool.Serial)
+--Messages.Print("Select a node", Colors.Confirm)
+--Target.WaitForTarget(3000)
 
-while Target.IsTargeting() do
-    Pause(250)
-end
+--while Target.IsTargeting() do
+--    Pause(250)
+--end
+
+--Target.Self()
+
 
 while true do
     Pause(ACTION_DELAY)
@@ -127,7 +130,8 @@ while true do
 
     Player.UseObject(tool.Serial)
     Target.WaitForTarget(3000)
-    Target.Last()
+    --Target.Last()
+    Target.Self()
 end
 
 for index, oreGraphic in ipairs(ORE_GRAPHICS) do
