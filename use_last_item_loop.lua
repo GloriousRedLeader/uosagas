@@ -34,7 +34,7 @@ Messages.Print("__________________________________", Colors.Info)
 
 Messages.Print("Select an object", Colors.Confirm)
 
-obj = Targeting.GetNewTarget()
+obj = Target.GetNewTarget()
 while true do
     Player.UseObject(obj)
     Pause(ACTION_DELAY)
