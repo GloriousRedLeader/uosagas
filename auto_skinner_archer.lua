@@ -160,7 +160,7 @@ local graphicIdLootableItemPriorityList =
     --0x9FF8,  -- Paragon Chest
     --0x9FF9,  -- Paragon Chest
     --0x2D9D,  -- Grimoire
-    0x0EED,  -- Gold
+    --0x0EED,  -- Gold
     --0x14EC,  -- Treasure Map
     0x573B,  -- Pigments
     --0x0EB2,  -- Lap Harp
@@ -208,13 +208,23 @@ local SKINNING_KNIFE = 0xFEA9
 -- Used for skinning corpses (cuts leather you want to keep)
 local SCISSOR_GRAPHIC = 0x0F9F
 
+-- Store cut leather matching KEEP_HUES in a nearby pack horse.
+-- Finds it by body graphic, not name or a hardcoded serial.
+local AUTO_STORE_LEATHER = true
+local PACK_HORSE_GRAPHIC = 0x0123
+local PACK_HORSE_RANGE = 2
+local CUT_LEATHER_GRAPHIC = 0x1081
+-- A renameable pet is normally one you control; this avoids random nearby horses.
+-- If your own pack horse is not marked renameable, change to false.
+local REQUIRE_RENAMABLE_HORSE = true
+
 -- Only keep these leathers, rest gets dropped on groud
 local KEEP_HUES = {
     -- 0x0000, -- Regular
     --0x0973, -- Dull Copper
     -- 0x0966, -- Shadow Iron
-    -- 0x096D, -- Copper
-    --0x0972, -- Bronze
+    0x096D, -- Copper
+    0x0972, -- Bronze
     0x08A5, -- Gold
     0x0979, -- Agapite
     0x089F, -- Verite
@@ -1027,6 +1037,71 @@ function UseBandage()
     end
 end -- This closes the function correctly
 
+---------------------------------------------------------
+-- PACK HORSE: STORE CUT LEATHER (UO Sagas assistant Lua)
+---------------------------------------------------------
+local nextLeatherStoreCheckMs = 0
+
+function FindNearbyPackHorse()
+    local horses = Mobiles.FindByFilter({
+        bodies = {PACK_HORSE_GRAPHIC},
+        dead = false,
+        rangemax = PACK_HORSE_RANGE
+    })
+
+    local closest = nil
+    for _, horse in ipairs(horses or {}) do
+        if (not REQUIRE_RENAMABLE_HORSE or horse.IsRenamable == true)
+        and horse.Distance ~= nil
+        and (closest == nil or horse.Distance < closest.Distance) then
+        closest = horse
+    end
+end
+return closest
+end
+
+function StoreKeptLeatherOnPackHorse()
+    if not AUTO_STORE_LEATHER or Player.Backpack == nil then return end
+
+    -- Run occasionally even when no new corpses are present. This lets it retry
+    -- when the horse was out of range during skinning.
+    local nowMs = os.time() * 1000
+    if nowMs < nextLeatherStoreCheckMs then return end
+    nextLeatherStoreCheckMs = nowMs + 2000
+
+    local horse = FindNearbyPackHorse()
+    if horse == nil then return end
+
+    -- 0x1081 is CUT leather. Read only loose stacks in our own backpack,
+    -- so we do not touch hides (0x1079) or leather inside other bags.
+    local leatherStacks = Items.FindInContainer(Player.Backpack.Serial, CUT_LEATHER_GRAPHIC)
+    if leatherStacks == nil then return end
+
+    for _, leather in ipairs(leatherStacks) do
+        if tableContains(KEEP_HUES, leather.Hue) then
+            -- The horse may have moved since we initially found it.
+            local nearbyHorse = Mobiles.FindBySerial(horse.Serial)
+            if nearbyHorse == nil or nearbyHorse.IsDead
+            or nearbyHorse.Distance == nil
+            or nearbyHorse.Distance > PACK_HORSE_RANGE then
+            return
+        end
+
+        if Player.PickUp(leather.Serial, leather.Amount) then
+            Pause(ACTION_DELAY)
+            if Player.DropInContainer(horse.Serial) then
+                Messages.Print("Sending " .. (leather.Name or "leather") .. " to pack horse", Colors.Confirm)
+            else
+                -- If the transfer request cannot be made, don't leave it held.
+                Player.DropInBackpack()
+                Messages.Print("Could not transfer leather to pack horse", Colors.Warning)
+            end
+            Pause(ACTION_DELAY)
+        end
+    end
+end
+end
+
 function AutoSkin()
     if not AUTO_SKIN_CORPSES then return end
     if Skills.GetValue("Skinning") < 1 then return end
@@ -1128,5 +1203,6 @@ while not Player.IsDead and not Player.IsHidden do
     ReequipWeapon()
     PickupMushrooms(mobileTarget)
     AutoSkin()
+    StoreKeptLeatherOnPackHorse()
     AutoLoot()
 end
