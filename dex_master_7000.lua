@@ -180,6 +180,7 @@ local graphicIdLootableItemPriorityList =
     --0x2D9D,  -- Grimoire
     0x0EED,  -- Gold
     0x14EC,  -- Treasure Map
+    0x14F0,  -- Halloween ticket
     0x573B,  -- Pigments
     --0x0EB2,  -- Lap Harp
     --0x0EB1,  -- Standing Harp
@@ -216,8 +217,8 @@ local graphicIdLootableItemPriorityList =
 
 -- Auto attack won't target these
 local MOBS_TO_IGNORE = {
-    --    "a giant toad",
-    --    "a rat"
+    "a giant toad",
+    "a rat"
 }
 
 ------------------------------------------------------------------------------------
@@ -967,7 +968,7 @@ function UseBandage()
 
             -- Check if ally exists, is alive, in range (1 tile), and needs help
             if ally and ally.Hits > 0 and ally.Distance <= 1 then
-            --if ally and ally.Distance <= 1 then
+                --if ally and ally.Distance <= 1 then
                 local hpPercent = (ally.Hits / ally.HitsMax)
 
                 if hpPercent <= BANDAGE_FRIENDS_MIN_THRESHOLD_HP or ally.IsPoisoned then

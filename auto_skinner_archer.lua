@@ -4,7 +4,7 @@
 ------------------------------------------------------------------------------------
 
 -- Don't screw aroudn with this.
-local VERSION = "1.0"
+local VERSION = "1.4"
 
 -- Milliseconds of delay between actions
 local ACTION_DELAY = 750
@@ -162,6 +162,7 @@ local graphicIdLootableItemPriorityList =
     --0x2D9D,  -- Grimoire
     --0x0EED,  -- Gold
     --0x14EC,  -- Treasure Map
+    0x14F0,  -- Halloween ticket
     0x573B,  -- Pigments
     --0x0EB2,  -- Lap Harp
     --0x0EB1,  -- Standing Harp
@@ -201,6 +202,9 @@ local AUTO_SKIN_CORPSES = true
 
 -- Used for skinning corpses
 local CORPSE_GRAPHIC = 0x2006
+-- Unwanted uncut hides: put them in a nearby corpse first, then on the ground.
+-- Use the corpse property, not a hand-maintained list of corpse graphics.
+local HIDE_DISPOSAL_RANGE = 2
 
 -- Used for skinning corpses
 local SKINNING_KNIFE = 0xFEA9
@@ -214,6 +218,19 @@ local AUTO_STORE_LEATHER = true
 local PACK_HORSE_GRAPHIC = 0x0123
 local PACK_HORSE_RANGE = 2
 local CUT_LEATHER_GRAPHIC = 0x1081
+-- If a horse cannot accept the leather, keep it until this weight.
+-- Below 390 stones = keep. At 390+ = drop only enough cut leather to
+-- get safely below 390. The server's cut-leather weight is 0.5 stone each.
+local MAX_LEATHER_CARRY_WEIGHT = 390
+local CUT_LEATHER_WEIGHT = 0.5
+-- Do not skin unless at least this much carrying capacity is available.
+-- This is based on the weight AFTER cutting, not the heavier uncut hides.
+-- With 0.5 stone per leather, 50 stones covers about 100 cut pieces.
+-- Actual hide yield is unknown until after skinning.
+local MIN_FREE_WEIGHT_TO_SKIN = 50
+-- A rejected pack horse is skipped for 15 seconds, PER HORSE.
+-- Other nearby horses are tried immediately without waiting.
+local HORSE_FAILURE_RETRY_MS = 15000
 -- A renameable pet is normally one you control; this avoids random nearby horses.
 -- If your own pack horse is not marked renameable, change to false.
 local REQUIRE_RENAMABLE_HORSE = true
@@ -222,10 +239,10 @@ local REQUIRE_RENAMABLE_HORSE = true
 local KEEP_HUES = {
     -- 0x0000, -- Regular
     --0x0973, -- Dull Copper
-    -- 0x0966, -- Shadow Iron
-    0x096D, -- Copper
-    0x0972, -- Bronze
-    0x08A5, -- Gold
+    --0x0966, -- Shadow Iron
+    --0x096D, -- Copper
+    --0x0972, -- Bronze
+    --0x08A5, -- Gold
     0x0979, -- Agapite
     0x089F, -- Verite
     0x08AB -- Valorite
@@ -1038,144 +1055,433 @@ function UseBandage()
 end -- This closes the function correctly
 
 ---------------------------------------------------------
--- PACK HORSE: STORE CUT LEATHER (UO Sagas assistant Lua)
+-- CUT LEATHER: NEARBY PACK HORSE, THEN 390-STONE FALLBACK
+-- Only leather graphic 0x1081 in KEEP_HUES is ever moved here.
 ---------------------------------------------------------
 local nextLeatherStoreCheckMs = 0
+-- Each horse has its own failure timeout. One full horse never blocks another.
+local failedHorseRetryBySerial = {}
 
-function FindNearbyPackHorse()
+-- Direct children of the main backpack only; no nested bags or hides.
+function GetKeptCutLeatherInBackpack()
+    if not Player.Backpack or not Player.Backpack.Serial then return {} end
+
+    local contents = Items.FindInContainer(Player.Backpack.Serial, CUT_LEATHER_GRAPHIC) or {}
+    local result = {}
+    for _, item in ipairs(contents) do
+        if tableContains(KEEP_HUES, item.Hue) then
+            table.insert(result, item)
+        end
+    end
+    return result
+end
+
+function CountBackpackCutLeatherHue(hue)
+    if not Player.Backpack or not Player.Backpack.Serial then return 0 end
+
+    local total = 0
+    local contents = Items.FindInContainer(Player.Backpack.Serial, CUT_LEATHER_GRAPHIC, hue) or {}
+    for _, item in ipairs(contents) do
+        total = total + (item.Amount or 1)
+    end
+    return total
+end
+
+-- Get a current copy of a stack, because a rejected drop may return the
+-- leather with a different serial (or merge it with another backpack stack).
+function RefreshKeptCutLeather(serial, hue)
+    local sameHue = nil
+    for _, item in ipairs(GetKeptCutLeatherInBackpack()) do
+        if item.Serial == serial then return item end
+        if item.Hue == hue and sameHue == nil then sameHue = item end
+    end
+    return sameHue
+end
+
+-- No special names and no hardcoded pet serials. Sort closest first.
+function FindNearbyPackHorses()
     local horses = Mobiles.FindByFilter({
         bodies = {PACK_HORSE_GRAPHIC},
         dead = false,
         rangemax = PACK_HORSE_RANGE
-    })
+    }) or {}
 
-    local closest = nil
-    for _, horse in ipairs(horses or {}) do
-        if (not REQUIRE_RENAMABLE_HORSE or horse.IsRenamable == true)
+    local eligible = {}
+    for _, horse in ipairs(horses) do
+        if horse.Serial ~= nil
+        and (not REQUIRE_RENAMABLE_HORSE or horse.IsRenamable == true)
+        and not horse.IsDead
         and horse.Distance ~= nil
-        and (closest == nil or horse.Distance < closest.Distance) then
-        closest = horse
+        and horse.Distance <= PACK_HORSE_RANGE then
+        table.insert(eligible, horse)
     end
 end
-return closest
+table.sort(eligible, function(a, b)
+    if a.Distance == b.Distance then return a.Serial < b.Serial end
+    return a.Distance < b.Distance
+end)
+return eligible
+end
+
+-- The client's successful drop return does not prove the server accepted
+-- it. Confirm that the stack really left our backpack after the action.
+-- Returns (true) on confirmed transfer, or (false, reason) otherwise.
+function TryStoreCutLeatherOnHorse(horse, leather)
+    local nearby = Mobiles.FindBySerial(horse.Serial)
+    if not nearby or nearby.IsDead or nearby.Distance == nil
+    or nearby.Distance > PACK_HORSE_RANGE
+    or (REQUIRE_RENAMABLE_HORSE and nearby.IsRenamable ~= true) then
+    return false, 'horse'
+end
+
+local before = CountBackpackCutLeatherHue(leather.Hue)
+local amount = leather.Amount or 1
+if before <= 0 or amount <= 0 then return false, 'item' end
+
+if not Player.PickUp(leather.Serial, amount) then
+    -- Failed pickup isn't evidence that the HORSE is full.
+    return false, 'pickup'
+end
+Pause(ACTION_DELAY)
+
+local submitted = Player.DropInContainer(horse.Serial)
+Pause(ACTION_DELAY)
+
+-- If rejected and still held, put it back. If accepted, there is
+-- nothing on the cursor and this returns false without moving items.
+local returnedToBag = Player.DropInBackpack()
+if returnedToBag then Pause(ACTION_DELAY) end
+
+local after = CountBackpackCutLeatherHue(leather.Hue)
+if submitted and not returnedToBag and after < before then
+    Messages.Print('Stored ' .. tostring(before - after) ..
+    ' cut leather in pack horse ' .. tostring(horse.Serial), Colors.Confirm)
+    return true
+end
+
+return false, 'horse'
+end
+
+-- When every horse fails (or none is nearby), retain kept cut leather if
+-- Weight < 390. Otherwise drop ONLY the excess cut leather in KEEP_HUES.
+function DropExcessKeptCutLeather()
+    if Player.Weight == nil then return end
+
+    local limit = MAX_LEATHER_CARRY_WEIGHT
+    if Player.MaxWeight and Player.MaxWeight < limit then
+        limit = Player.MaxWeight
+    end
+    if Player.Weight < limit then return end
+
+    -- Aim one stone below the limit to allow for client rounding.
+    local targetWeight = limit - 1
+    local leatherStacks = GetKeptCutLeatherInBackpack()
+
+    -- Prefer dropping earlier hues in the user's KEEP_HUES list first.
+    table.sort(leatherStacks, function(a, b)
+        local rankA = #KEEP_HUES + 1
+        local rankB = #KEEP_HUES + 1
+        for i, hue in ipairs(KEEP_HUES) do
+            if hue == a.Hue then rankA = i end
+            if hue == b.Hue then rankB = i end
+        end
+        return rankA < rankB
+    end)
+
+    for _, leather in ipairs(leatherStacks) do
+        if Player.Weight < limit then break end
+
+        local pieces = math.ceil((Player.Weight - targetWeight) / CUT_LEATHER_WEIGHT)
+        pieces = math.max(1, math.min(leather.Amount or 1, pieces))
+        local before = CountBackpackCutLeatherHue(leather.Hue)
+
+        if Player.PickUp(leather.Serial, pieces) then
+            Pause(ACTION_DELAY)
+            local submitted = Player.DropOnGround()
+            Pause(ACTION_DELAY)
+            -- As above, a refused drop can leave an item on the cursor.
+            local returnedToBag = Player.DropInBackpack()
+            if returnedToBag then Pause(ACTION_DELAY) end
+            local after = CountBackpackCutLeatherHue(leather.Hue)
+
+            if submitted and not returnedToBag and after < before then
+                Messages.Print('Weight ' .. tostring(Player.Weight) ..
+                ': dropped ' .. tostring(before - after) ..
+                ' kept cut leather (hue ' .. string.format('0x%04X', leather.Hue) ..
+                ')', Colors.Warning)
+            else
+                Messages.Print('Could not drop excess cut leather', Colors.Warning)
+                break
+            end
+        else
+            Messages.Print('Could not pick up excess cut leather to drop', Colors.Warning)
+            break
+        end
+    end
 end
 
 function StoreKeptLeatherOnPackHorse()
-    if not AUTO_STORE_LEATHER or Player.Backpack == nil then return end
+    if not Player.Backpack or not Player.Backpack.Serial then return end
 
-    -- Run occasionally even when no new corpses are present. This lets it retry
-    -- when the horse was out of range during skinning.
     local nowMs = os.time() * 1000
     if nowMs < nextLeatherStoreCheckMs then return end
     nextLeatherStoreCheckMs = nowMs + 2000
 
-    local horse = FindNearbyPackHorse()
-    if horse == nil then return end
+    local leatherStacks = GetKeptCutLeatherInBackpack()
+    if #leatherStacks == 0 then return end
 
-    -- 0x1081 is CUT leather. Read only loose stacks in our own backpack,
-    -- so we do not touch hides (0x1079) or leather inside other bags.
-    local leatherStacks = Items.FindInContainer(Player.Backpack.Serial, CUT_LEATHER_GRAPHIC)
-    if leatherStacks == nil then return end
+    local horses = {}
+    if AUTO_STORE_LEATHER then
+        horses = FindNearbyPackHorses()
+    end
 
-    for _, leather in ipairs(leatherStacks) do
-        if tableContains(KEEP_HUES, leather.Hue) then
-            -- The horse may have moved since we initially found it.
-            local nearbyHorse = Mobiles.FindBySerial(horse.Serial)
-            if nearbyHorse == nil or nearbyHorse.IsDead
-            or nearbyHorse.Distance == nil
-            or nearbyHorse.Distance > PACK_HORSE_RANGE then
-            return
+    -- Try EVERY eligible nearby horse, closest first, for each stack.
+    -- A full / unreachable horse is cooled down independently. When one
+    -- rejects the leather, try the next horse immediately on this pass.
+    for _, originalLeather in ipairs(leatherStacks) do
+        for _, horse in ipairs(horses) do
+            if (failedHorseRetryBySerial[horse.Serial] or 0) <= nowMs then
+                local leather = RefreshKeptCutLeather(originalLeather.Serial, originalLeather.Hue)
+                if not leather then break end
+
+                local stored, reason = TryStoreCutLeatherOnHorse(horse, leather)
+                if stored then
+                    -- One success means this stack is handled. The next stack
+                    -- starts again at the nearest non-failed horse.
+                    failedHorseRetryBySerial[horse.Serial] = nil
+                    break
+                elseif reason == 'horse' then
+                    failedHorseRetryBySerial[horse.Serial] = nowMs + HORSE_FAILURE_RETRY_MS
+                    Messages.Print('Pack horse ' .. tostring(horse.Serial) ..
+                    ' full/unavailable; trying another', Colors.Warning)
+                else
+                    -- A missing item or failed pickup will not improve by
+                    -- trying a different horse; avoid useless extra actions.
+                    break
+                end
+            end
+        end
+    end
+
+    -- Always protect weight after all eligible horses have been tried.
+    -- Never drop kept cut leather while safely below the carry limit.
+    DropExcessKeptCutLeather()
+end
+
+---------------------------------------------------------
+-- SKINNING CAPACITY: don't trigger automatic hide pickup
+-- unless there is room for an expected 50-stone cut yield.
+-- We cannot know the exact number of hides before skinning.
+---------------------------------------------------------
+local nextSkinningWarningMs = 0
+
+function SkinningCapacityLimit()
+    local limit = MAX_LEATHER_CARRY_WEIGHT
+    if Player.MaxWeight and Player.MaxWeight < limit then
+        limit = Player.MaxWeight
+    end
+    return limit
+end
+
+function SkinningWarning(message)
+    local nowMs = os.time() * 1000
+    if nowMs >= nextSkinningWarningMs then
+        Messages.Print(message, Colors.Warning)
+        nextSkinningWarningMs = nowMs + 10000
+    end
+end
+
+function HaveKeptUncutHides()
+    -- Only check our own inventory. Don't touch hides inside corpses.
+    local hides = Items.FindByFilter({ graphics = {0x1079}, onground = false }) or {}
+    for _, hide in ipairs(hides) do
+        if hide.RootContainer == Player.Serial and tableContains(KEEP_HUES, hide.Hue) then
+            return true
+        end
+    end
+    return false
+end
+
+---------------------------------------------------------
+-- UNWANTED HIDES: CORPSE FIRST, GROUND IF REJECTED
+-- Uses Items.FindByFilter(corpse=true) rather than a graphic list.
+-- Only uncut 0x1079 hides outside KEEP_HUES go through here.
+---------------------------------------------------------
+function FindNearbyHideDisposalCorpses(preferredCorpseSerial)
+    local corpses = Items.FindByFilter({corpse = true, onground = true, rangemax = HIDE_DISPOSAL_RANGE}) or {}
+    table.sort(corpses, function(a, b)
+        if a.Serial == preferredCorpseSerial then return true end
+        if b.Serial == preferredCorpseSerial then return false end
+        if (a.Distance or 999) ~= (b.Distance or 999) then return (a.Distance or 999) < (b.Distance or 999) end
+        return (a.Serial or 0) < (b.Serial or 0)
+    end)
+    return corpses
+end
+
+function PutUnwantedHidesInCorpseOrGround(hide, preferredCorpseSerial)
+    -- The script only handles unwanted UNCUT hides in our own inventory.
+    if not hide or hide.Graphic ~= 0x1079 then return false end
+    if hide.RootContainer ~= Player.Serial then return false end
+    if tableContains(KEEP_HUES, hide.Hue) then return false end
+
+    local serial = hide.Serial
+    local amount = hide.Amount or 1
+    local hue = hide.Hue
+    local corpses = FindNearbyHideDisposalCorpses(preferredCorpseSerial)
+
+    -- Lift once; don't drop on the ground and then pick it up again.
+    if not Player.PickUp(serial, amount) then return false end
+    Pause(ACTION_DELAY)
+
+    for _, corpse in ipairs(corpses) do
+        local currentCorpse = Items.FindBySerial(corpse.Serial)
+        if currentCorpse and currentCorpse.IsCorpse and currentCorpse.OnGround
+        and currentCorpse.Distance and currentCorpse.Distance <= HIDE_DISPOSAL_RANGE then
+        local before = Items.CountTypeInContainer(corpse.Serial, 0x1079, hue)
+        local submitted = Player.DropInContainer(corpse.Serial)
+        Pause(ACTION_DELAY)
+
+        -- A client-side true means the drop was sent, not necessarily accepted.
+        -- Confirm by the item's destination or a rise in the corpse's count.
+        local fresh = Items.FindBySerial(serial)
+        local after = Items.CountTypeInContainer(corpse.Serial, 0x1079, hue)
+        if submitted and ((fresh and fresh.Container == corpse.Serial) or after > before) then
+            Messages.Print('Unwanted hides -> corpse ' .. tostring(corpse.Serial), Colors.Status)
+            return true
         end
 
-        if Player.PickUp(leather.Serial, leather.Amount) then
-            Pause(ACTION_DELAY)
-            if Player.DropInContainer(horse.Serial) then
-                Messages.Print("Sending " .. (leather.Name or "leather") .. " to pack horse", Colors.Confirm)
-            else
-                -- If the transfer request cannot be made, don't leave it held.
-                Player.DropInBackpack()
-                Messages.Print("Could not transfer leather to pack horse", Colors.Warning)
-            end
-            Pause(ACTION_DELAY)
+        -- If the server bounced the hides into the backpack, lift again
+        -- for the next corpse. If they're still held, PickUp just returns
+        -- false and the next drop can proceed without lifting again.
+        if fresh and fresh.RootContainer == Player.Serial and not fresh.OnGround then
+            if Player.PickUp(fresh.Serial, fresh.Amount or amount) then Pause(ACTION_DELAY) end
+        elseif fresh and fresh.OnGround then
+            -- The server placed them on the ground; don't retrieve them.
+            return true
         end
     end
 end
+
+-- No corpse, all rejected, or not confirmed: drop once at our feet.
+if Player.DropOnGround() then
+    Pause(ACTION_DELAY)
+    Messages.Print('Unwanted hides -> ground', Colors.Status)
+    return true
+end
+
+-- Some server rejections return the hides directly to the backpack.
+-- Re-lift ONLY if the original stack is visibly still ours.
+local fresh = Items.FindBySerial(serial)
+if fresh and fresh.RootContainer == Player.Serial and not fresh.OnGround then
+    if Player.PickUp(fresh.Serial, fresh.Amount or amount) then
+        Pause(ACTION_DELAY)
+        if Player.DropOnGround() then
+            Pause(ACTION_DELAY)
+            Messages.Print('Unwanted hides -> ground', Colors.Status)
+            return true
+        end
+    end
+end
+
+-- Last resort: avoid leaving something on the cursor if a drop failed.
+Player.DropInBackpack()
+Pause(ACTION_DELAY)
+return false
+end
+
+function CutOrDropInventoryHides(scissors, preferredCorpseSerial)
+    -- A Sagas server change sends skinned hides directly into the backpack.
+    -- Cut KEEP_HUES; try to put all unwanted uncut hides in a nearby corpse.
+    local hides = Items.FindByFilter({ graphics = {0x1079}, onground = false }) or {}
+    for _, hide in ipairs(hides) do
+        if hide.RootContainer == Player.Serial then
+            if not tableContains(KEEP_HUES, hide.Hue) then
+                if NOISY_MODE then
+                    Player.Say('- ' .. (hide.Name or 'hides') .. ' -', Colors.Warning)
+                else
+                    Messages.OverheadMobile(Player.Serial, '- ' .. (hide.Name or 'hides') .. ' -', Colors.Warning)
+                end
+                PutUnwantedHidesInCorpseOrGround(hide, preferredCorpseSerial)
+            elseif scissors then
+                if NOISY_MODE then
+                    Player.Say('+ ' .. (hide.Name or 'hides') .. ' +', Colors.Confirm)
+                else
+                    Messages.OverheadMobile(Player.Serial, '+ ' .. (hide.Name or 'hides') .. ' +', Colors.Confirm)
+                end
+                Player.UseObject(scissors.Serial)
+                Target.WaitForTarget(3000)
+                Target.TargetSerial(hide.Serial)
+                Pause(ACTION_DELAY)
+            end
+        end
+    end
 end
 
 function AutoSkin()
     if not AUTO_SKIN_CORPSES then return end
-    if Skills.GetValue("Skinning") < 1 then return end
-
-
-    local skinningKnife = GetSkinningKnife()
-    if skinningKnife == nil then return end
+    if Skills.GetValue('Skinning') < 1 then return end
 
     local scissors = Items.FindByType(SCISSOR_GRAPHIC)
+    -- Prevent new heavy hides if we cannot actually cut them afterward.
+    if scissors and scissors.RootContainer ~= Player.Serial then
+        scissors = nil
+    end
 
-    local corpseFilter = {
+    -- Process any existing backpack hides BEFORE the weight check.
+    -- Otherwise old, heavy hides could leave us permanently blocked.
+    CutOrDropInventoryHides(scissors)
+
+    local skinningKnife = GetSkinningKnife()
+    if not skinningKnife then return end
+
+    local corpses = Items.FindByFilter({
         graphics = {CORPSE_GRAPHIC},
         onground = true,
         rangemin = 0,
         rangemax = 2
-    }
+    }) or {}
 
-    local corpses = Items.FindByFilter(corpseFilter)
     for _, corpse in ipairs(corpses) do
         if not HasProcessedCorpse(corpse.Serial) then
             if tableContains(SKIP_CORPSES, corpse.Amount) then
-                Messages.Print("Skipping corpse: " .. (corpse.Name or "Unknown"), Colors.Warning)
+                Messages.Print('Skipping corpse: ' .. (corpse.Name or 'Unknown'), Colors.Warning)
                 if AUTOLOOT then
                     Player.UseObject(corpse.Serial)
                     Pause(ACTION_DELAY)
                 end
+                MarkCorpseProcessed(corpse.Serial)
+            elseif not scissors then
+                SkinningWarning('Not skinning: scissors are not in your inventory')
+                -- Don't mark this corpse; retry when scissors are available.
+            elseif HaveKeptUncutHides() then
+                SkinningWarning('Not skinning: uncut KEEP_HUES hides still in backpack')
+                -- Cut old hides successfully before taking on more.
             else
-                Messages.Print("Processing corpse: " .. (corpse.Name or "Unknown"), Colors.Info)
+                local limit = SkinningCapacityLimit()
+                local freeWeight = Player.Weight and (limit - Player.Weight) or -1
+                if freeWeight < MIN_FREE_WEIGHT_TO_SKIN then
+                    SkinningWarning('Not skinning: ' .. tostring(freeWeight) ..
+                    ' free stones (need ' .. tostring(MIN_FREE_WEIGHT_TO_SKIN) ..
+                    ', limit ' .. tostring(limit) .. ')')
+                    -- IMPORTANT: Don't mark corpse processed when skipping for weight.
+                    -- It remains eligible if you later unload leather.
+                else
+                    Messages.Print('Processing corpse: ' .. (corpse.Name or 'Unknown'), Colors.Info)
+                    Player.UseObject(skinningKnife.Serial)
+                    Target.WaitForTarget(1000, false)
+                    Target.TargetSerial(corpse.Serial)
+                    Pause(ACTION_DELAY)
 
-                -- Skin the corpse
-                Player.UseObject(skinningKnife.Serial)
-                Target.WaitForTarget(1000, false)
-                Target.TargetSerial(corpse.Serial)
-                Pause(ACTION_DELAY)
+                    -- Open for the existing autolooter; hides are handled in inventory.
+                    Player.UseObject(corpse.Serial)
+                    Pause(ACTION_DELAY)
 
-                -- Open the corpse
-                Player.UseObject(corpse.Serial)
-                Pause(ACTION_DELAY)
-
-                local hides = Items.FindByFilter({
-                    graphics = {0x1079},
-                    onground = false
-                })
-                for _, hide in ipairs(hides) do
-                    if hide.RootContainer == Player.Serial and not tableContains(KEEP_HUES, hide.Hue) then
-                        if NOISY_MODE then
-                            Player.Say("- " .. hide.Name .. " -", Colors.Warning)
-                        else
-                            Messages.OverheadMobile(Player.Serial, "- " .. hide.Name .. " -", Colors.Warning)
-                        end
-                        Player.PickUp(hide.Serial, hide.Amount)
-                        Player.DropOnGround()
-                        Pause(ACTION_DELAY)
-                    elseif hide.RootContainer == Player.Serial and scissors ~= nil then
-                        if NOISY_MODE then
-                            Player.Say("+ " .. hide.Name .. " +", Colors.Confirm)
-                        else
-                            Messages.OverheadMobile(Player.Serial, "+ " .. hide.Name .. " +", Colors.Confirm)
-                        end
-                        Player.UseObject(scissors.Serial)
-                        Target.WaitForTarget(3000)
-                        Target.TargetSerial(hide.Serial)
-                        Pause(ACTION_DELAY)
-                    end
+                    CutOrDropInventoryHides(scissors, corpse.Serial)
+                    MarkCorpseProcessed(corpse.Serial)
                 end
-
             end
-
-            -- Mark corpse processed so it never repeats
-            MarkCorpseProcessed(corpse.Serial)
         end
     end
-
-
 end
 
 Journal.Clear()
