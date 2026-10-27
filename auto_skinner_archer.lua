@@ -164,6 +164,7 @@ local graphicIdLootableItemPriorityList =
     --0x14EC,  -- Treasure Map
     0x14F0,  -- Halloween ticket
     0x573B,  -- Pigments
+    0x099F,  -- Message in a Bottle
     --0x0EB2,  -- Lap Harp
     --0x0EB1,  -- Standing Harp
     --0x0EB3,  -- Lute
