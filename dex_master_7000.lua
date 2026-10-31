@@ -109,6 +109,7 @@ local FRIEND_SERIALS = {
     0x00732D7C, --- Furnace
     0x00743442, --- Woody dun-dun
     0x0075147B, --- Tron
+    0x0075162F, --- Hyperdad
 }
 
 -- Auto pop pouches
@@ -181,6 +182,8 @@ local graphicIdLootableItemPriorityList =
     0x0EED,  -- Gold
     0x14EC,  -- Treasure Map
     0x14F0,  -- Halloween ticket
+    0xA16A,  -- Jack-O-Lantern
+    0xA166,  -- Jack-O-Lantern
     0x573B,  -- Pigments
     0x099F,  -- Message in a Bottle
     --0x0EB2,  -- Lap Harp
