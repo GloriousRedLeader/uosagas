@@ -241,8 +241,8 @@ local KEEP_HUES = {
     -- 0x0000, -- Regular
     --0x0973, -- Dull Copper
     --0x0966, -- Shadow Iron
-    --0x096D, -- Copper
-    --0x0972, -- Bronze
+    0x096D, -- Copper
+    0x0972, -- Bronze
     --0x08A5, -- Gold
     0x0979, -- Agapite
     0x089F, -- Verite
